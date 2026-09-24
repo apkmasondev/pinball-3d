@@ -99,14 +99,6 @@ async function boot() {
   }
   table.glass.visible = settings.quality !== 'low';
 
-  // DMD on the backbox
-  const dmdTex = new THREE.CanvasTexture(display.canvas);
-  dmdTex.colorSpace = THREE.SRGBColorSpace;
-  dmdTex.flipY = false;            // the screen's UVs come from glTF (V already flipped)
-  if (table.dyn.dmdScreen) {
-    table.dyn.dmdScreen.traverse(o => { if (o.isMesh) o.material = new THREE.MeshBasicMaterial({ map: dmdTex, toneMapped: false }); });
-  }
-  table.dmdTex = dmdTex;
   cards = new ApronCards(table.root);
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => cards.build(settings.lang));
   const hudCtx = ui.dmdCanvas.getContext('2d');
@@ -161,7 +153,6 @@ async function boot() {
     display.update(dt);
     hudCtx.clearRect(0, 0, ui.dmdCanvas.width, ui.dmdCanvas.height);
     hudCtx.drawImage(display.canvas, 0, 0);
-    dmdTex.needsUpdate = true;
     stage.render(dt, tnow);
   };
   requestAnimationFrame(frame);

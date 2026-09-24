@@ -162,7 +162,6 @@ export class TableView {
     d.kickback = find('kickback');
     d.turntable = find('turntable');
     d.slings = this.L.slings.map(s => find(s.id + '_rubber'));
-    d.dmdScreen = find('dmdScreen');
     d.backglass = find('backglass');
     d.apron = find('apron');
     // flasher domes: own glowing material + a real light each
@@ -195,7 +194,7 @@ export class TableView {
     }
     const dynSet = new Set();
     const markDyn = (o) => o && o.traverse(c => dynSet.add(c));
-    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.dmdScreen, d.backglass, d.apron].forEach(markDyn);
+    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.backglass, d.apron].forEach(markDyn);
 
     // ---- material fix-ups by name
     const fix = (m) => {
@@ -215,7 +214,7 @@ export class TableView {
       if (n === 'innerwall_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; }
       // painted back panel: a touch of self-light so the moon halo reads behind the medallion
       if (n === 'backpanel_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; m.emissive = new THREE.Color(1, 0.92, 0.85); m.emissiveMap = m.map; m.emissiveIntensity = 0.28; }
-      if (n === 'backglass') { m.emissiveIntensity = 0.85; }
+      if (n === 'backglass') { m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; m.emissiveIntensity = 0.9; }   // backlit translite: the art glows, not a flat white
       // head panels around the display: a faint glow so the art reads in the dark room, never competing with the table
       if (n === 'speakerpanel_art' || n === 'neckpanel_art') { m.clearcoat = 0.2; m.roughness = 0.5; m.envMapIntensity = 0.4; m.emissive = new THREE.Color(1, 0.9, 0.82); m.emissiveMap = m.map; m.emissiveIntensity = n === 'neckpanel_art' ? 0.35 : 0.45; }
       if (m.map) m.map.anisotropy = 8;
