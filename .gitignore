@@ -1,0 +1,19 @@
+# Allow-list: only the game itself, the README and the Pages workflow are published.
+/*
+!/.gitignore
+!/README.md
+!/.github/
+!/game/
+
+# build output and dependencies
+/game/node_modules/
+/game/dist/
+
+# editor / OS noise
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+.env
+.env.*

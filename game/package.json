@@ -1,0 +1,26 @@
+{
+  "name": "tsukimi-pinball",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tsukimi — Moonlit Koi Garden: a 3D pinball game for the browser (three.js).",
+  "type": "module",
+  "homepage": "https://apkmasondev.github.io/pinball-3d/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apkmasondev/pinball-3d.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/marcellus": "^5.3.0",
+    "@fontsource/shippori-mincho": "^5.3.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

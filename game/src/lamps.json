@@ -1,0 +1,614 @@
+[
+{
+"id": 1,
+"name": "orbitL1",
+"group": "rule",
+"u": 230,
+"v": 629,
+"r": 45,
+"color": "#4a4842"
+},
+{
+"id": 2,
+"name": "orbitL2",
+"group": "rule",
+"u": 174,
+"v": 712,
+"r": 45,
+"color": "#42403c"
+},
+{
+"id": 3,
+"name": "orbitLval",
+"group": "rule",
+"u": 277,
+"v": 675,
+"r": 24,
+"color": "#4d4936"
+},
+{
+"id": 4,
+"name": "orbitLjp",
+"group": "rule",
+"u": 230,
+"v": 736,
+"r": 24,
+"color": "#4e4933"
+},
+{
+"id": 5,
+"name": "orbitR1",
+"group": "rule",
+"u": 857,
+"v": 630,
+"r": 45,
+"color": "#4a4843"
+},
+{
+"id": 6,
+"name": "orbitR2",
+"group": "rule",
+"u": 910,
+"v": 706,
+"r": 45,
+"color": "#4b4843"
+},
+{
+"id": 7,
+"name": "orbitRval",
+"group": "rule",
+"u": 810,
+"v": 676,
+"r": 24,
+"color": "#4c4836"
+},
+{
+"id": 8,
+"name": "orbitRjp",
+"group": "rule",
+"u": 857,
+"v": 736,
+"r": 24,
+"color": "#4e4833"
+},
+{
+"id": 9,
+"name": "rampArrow",
+"group": "rule",
+"u": 703,
+"v": 800,
+"r": 34,
+"color": "#464038"
+},
+{
+"id": 10,
+"name": "rampJp",
+"group": "rule",
+"u": 725,
+"v": 810,
+"r": 17,
+"color": "#1c160f"
+},
+{
+"id": 11,
+"name": "rampLock",
+"group": "rule",
+"u": 683,
+"v": 771,
+"r": 13,
+"color": "#2f2a24"
+},
+{
+"id": 12,
+"name": "drops",
+"group": "rule",
+"u": 380,
+"v": 800,
+"r": 30,
+"color": "#3b3831"
+},
+{
+"id": 13,
+"name": "dropsJp",
+"group": "rule",
+"u": 402,
+"v": 771,
+"r": 13,
+"color": "#3d3830"
+},
+{
+"id": 14,
+"name": "lock1",
+"group": "rule",
+"u": 297,
+"v": 476,
+"r": 75,
+"color": "#4b4945"
+},
+{
+"id": 15,
+"name": "lock2",
+"group": "rule",
+"u": 373,
+"v": 480,
+"r": 18,
+"color": "#4d473d"
+},
+{
+"id": 16,
+"name": "lock3",
+"group": "rule",
+"u": 374,
+"v": 533,
+"r": 12,
+"color": "#514a2a"
+},
+{
+"id": 17,
+"name": "jp1",
+"group": "rule",
+"u": 787,
+"v": 476,
+"r": 75,
+"color": "#4b4945"
+},
+{
+"id": 18,
+"name": "jp2",
+"group": "rule",
+"u": 714,
+"v": 480,
+"r": 18,
+"color": "#4d473c"
+},
+{
+"id": 19,
+"name": "jp3",
+"group": "rule",
+"u": 713,
+"v": 533,
+"r": 12,
+"color": "#514a2d"
+},
+{
+"id": 20,
+"name": "spinL1",
+"group": "rule",
+"u": 65,
+"v": 502,
+"r": 18,
+"color": "#4c4635"
+},
+{
+"id": 21,
+"name": "spinL2",
+"group": "rule",
+"u": 69,
+"v": 549,
+"r": 18,
+"color": "#514832"
+},
+{
+"id": 22,
+"name": "skill1",
+"group": "rule",
+"u": 1021,
+"v": 483,
+"r": 18,
+"color": "#4d452f"
+},
+{
+"id": 23,
+"name": "skill2",
+"group": "rule",
+"u": 1022,
+"v": 523,
+"r": 18,
+"color": "#4f4335"
+},
+{
+"id": 24,
+"name": "moonPath1",
+"group": "rule",
+"u": 551,
+"v": 625,
+"r": 22,
+"color": "#4c4438"
+},
+{
+"id": 25,
+"name": "moonPath2",
+"group": "rule",
+"u": 550,
+"v": 584,
+"r": 22,
+"color": "#4a4134"
+},
+{
+"id": 26,
+"name": "moonPath3",
+"group": "rule",
+"u": 545,
+"v": 555,
+"r": 22,
+"color": "#3d3529"
+},
+{
+"id": 27,
+"name": "bonus2",
+"group": "rule",
+"u": 598,
+"v": 1066,
+"r": 22,
+"color": "#4d4940"
+},
+{
+"id": 28,
+"name": "bonus3",
+"group": "rule",
+"u": 749,
+"v": 1023,
+"r": 22,
+"color": "#4c4835"
+},
+{
+"id": 29,
+"name": "bonus4",
+"group": "rule",
+"u": 784,
+"v": 1098,
+"r": 22,
+"color": "#4d4834"
+},
+{
+"id": 30,
+"name": "bonus5",
+"group": "rule",
+"u": 815,
+"v": 1181,
+"r": 22,
+"color": "#4c4835"
+},
+{
+"id": 31,
+"name": "frenzy",
+"group": "rule",
+"u": 880,
+"v": 938,
+"r": 22,
+"color": "#4d4638"
+},
+{
+"id": 32,
+"name": "mystery",
+"group": "rule",
+"u": 150,
+"v": 1008,
+"r": 22,
+"color": "#4d4830"
+},
+{
+"id": 33,
+"name": "extraBallLit",
+"group": "rule",
+"u": 262,
+"v": 950,
+"r": 16,
+"color": "#4f4b28"
+},
+{
+"id": 34,
+"name": "multiLit",
+"group": "rule",
+"u": 405,
+"v": 949,
+"r": 16,
+"color": "#50443e"
+},
+{
+"id": 35,
+"name": "outL",
+"group": "rule",
+"u": 183,
+"v": 1390,
+"r": 20,
+"color": "#4d4844"
+},
+{
+"id": 36,
+"name": "outR",
+"group": "rule",
+"u": 910,
+"v": 1390,
+"r": 20,
+"color": "#4e4843"
+},
+{
+"id": 37,
+"name": "inL",
+"group": "rule",
+"u": 215,
+"v": 1257,
+"r": 75,
+"color": "#4c4b47"
+},
+{
+"id": 38,
+"name": "inR",
+"group": "rule",
+"u": 881,
+"v": 1257,
+"r": 75,
+"color": "#4c4a47"
+},
+{
+"id": 39,
+"name": "launch1",
+"group": "rule",
+"u": 997,
+"v": 1058,
+"r": 45,
+"color": "#4c4a44"
+},
+{
+"id": 40,
+"name": "launch2",
+"group": "rule",
+"u": 989,
+"v": 954,
+"r": 45,
+"color": "#4c4a45"
+},
+{
+"id": 41,
+"name": "launch3",
+"group": "rule",
+"u": 997,
+"v": 846,
+"r": 45,
+"color": "#4b4945"
+},
+{
+"id": 42,
+"name": "shootAgain",
+"group": "rule",
+"u": 543,
+"v": 1600,
+"r": 44,
+"color": "#31150b"
+},
+{
+"id": 43,
+"name": "scoopRing",
+"group": "rule",
+"u": 543,
+"v": 372,
+"r": 62,
+"color": "#291509"
+},
+{
+"id": 44,
+"name": "saucerRing",
+"group": "rule",
+"u": 145,
+"v": 870,
+"r": 52,
+"color": "#1e150d"
+},
+{
+"id": 45,
+"name": "moon",
+"group": "moon",
+"u": 548,
+"v": 100,
+"r": 64,
+"color": "#463f33"
+},
+{
+"id": 46,
+"name": "ballSave",
+"group": "rule",
+"u": 483,
+"v": 1180,
+"r": 12,
+"color": "#4f4d32"
+},
+{
+"id": 47,
+"name": "tt1",
+"group": "rule",
+"u": 703,
+"v": 1292,
+"r": 13,
+"color": "#4e4c30"
+},
+{
+"id": 48,
+"name": "comboL",
+"group": "rule",
+"u": 50,
+"v": 1324,
+"r": 10,
+"color": "#4e4739"
+},
+{
+"id": 49,
+"name": "comboR",
+"group": "rule",
+"u": 821,
+"v": 864,
+"r": 12,
+"color": "#504c2a"
+},
+{
+"id": 50,
+"name": "bumperLitL",
+"group": "rule",
+"u": 297,
+"v": 330,
+"r": 27,
+"color": "#3b1916"
+},
+{
+"id": 51,
+"name": "pagoda",
+"group": "rule",
+"u": 790,
+"v": 330,
+"r": 27,
+"color": "#331206"
+},
+{
+"id": 52,
+"name": "orbitTopL",
+"group": "rule",
+"u": 100,
+"v": 196,
+"r": 17,
+"color": "#382b11"
+},
+{
+"id": 53,
+"name": "orbitTopR",
+"group": "rule",
+"u": 986,
+"v": 196,
+"r": 17,
+"color": "#382b11"
+},
+{
+"id": 54,
+"name": "kickback",
+"group": "rule",
+"u": 80,
+"v": 1394,
+"r": 27,
+"color": "#0f1c2e"
+},
+{
+"id": 55,
+"name": "plungerLamp",
+"group": "rule",
+"u": 996,
+"v": 1612,
+"r": 22,
+"color": "#2f1f09"
+},
+{
+"id": 56,
+"name": "laneTSU",
+"group": "rule",
+"u": 285,
+"v": 262,
+"r": 19,
+"color": "#3d1a16"
+},
+{
+"id": 57,
+"name": "laneKI",
+"group": "rule",
+"u": 359,
+"v": 262,
+"r": 19,
+"color": "#372b11"
+},
+{
+"id": 58,
+"name": "laneMI",
+"group": "rule",
+"u": 433,
+"v": 262,
+"r": 19,
+"color": "#351306"
+},
+{
+"id": 59,
+"name": "lantern0",
+"group": "lantern",
+"u": 177,
+"v": 290,
+"r": 34,
+"color": "#a8721e"
+},
+{
+"id": 60,
+"name": "lantern1",
+"group": "lantern",
+"u": 910,
+"v": 290,
+"r": 34,
+"color": "#b07b23"
+},
+{
+"id": 61,
+"name": "lantern2",
+"group": "lantern",
+"u": 215,
+"v": 470,
+"r": 34,
+"color": "#b77f2e"
+},
+{
+"id": 62,
+"name": "lantern3",
+"group": "lantern",
+"u": 200,
+"v": 690,
+"r": 34,
+"color": "#8a6435"
+},
+{
+"id": 63,
+"name": "lantern4",
+"group": "lantern",
+"u": 811,
+"v": 650,
+"r": 34,
+"color": "#785126"
+},
+{
+"id": 64,
+"name": "lantern5",
+"group": "lantern",
+"u": 610,
+"v": 638,
+"r": 34,
+"color": "#d5b8a2"
+},
+{
+"id": 65,
+"name": "lantern6",
+"group": "lantern",
+"u": 364,
+"v": 880,
+"r": 34,
+"color": "#c56c7e"
+},
+{
+"id": 66,
+"name": "lantern7",
+"group": "lantern",
+"u": 533,
+"v": 966,
+"r": 34,
+"color": "#a68b60"
+},
+{
+"id": 67,
+"name": "lantern8",
+"group": "lantern",
+"u": 720,
+"v": 485,
+"r": 34,
+"color": "#745929"
+},
+{
+"id": 68,
+"name": "lantern9",
+"group": "lantern",
+"u": 575,
+"v": 450,
+"r": 34,
+"color": "#9d6e5d"
+}
+]

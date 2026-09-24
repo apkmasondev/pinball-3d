@@ -1,0 +1,55 @@
+{
+ "songs": {
+  "st": {
+   "file": "song_st",
+   "samples": 8262576,
+   "rate": 44100,
+   "barLen": 1.78339,
+   "barPhase": 1.0398
+  },
+  "calm": {
+   "file": "song_calm",
+   "samples": 9208080,
+   "rate": 44100,
+   "barLen": 2.69724,
+   "barPhase": 0.4171
+  }
+ },
+ "cues": {
+  "main": {
+   "song": "st",
+   "start": 0.0,
+   "loopStart": 17.0903,
+   "loopEnd": 184.7292,
+   "gain": 1.0
+  },
+  "multiball": {
+   "song": "st",
+   "start": 133.0108,
+   "loopStart": 133.0108,
+   "loopEnd": 184.7292,
+   "gain": 1.05
+  },
+  "frenzy": {
+   "song": "st",
+   "start": 113.3935,
+   "loopStart": 113.3935,
+   "loopEnd": 141.9278,
+   "gain": 1.0
+  },
+  "attract": {
+   "song": "calm",
+   "start": 0.0,
+   "loopStart": 21.995,
+   "loopEnd": 183.8291,
+   "gain": 0.9
+  },
+  "tsukimi": {
+   "song": "calm",
+   "start": 108.3065,
+   "loopStart": 108.3065,
+   "loopEnd": 140.6733,
+   "gain": 1.0
+  }
+ }
+}
