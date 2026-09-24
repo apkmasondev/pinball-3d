@@ -2,7 +2,7 @@
 
 Trójwymiarowy pinball działający w przeglądarce. Nocny japoński ogród: koi, sakura, latarnie i brama torii pod pełnią księżyca.
 
-**▶ Zagraj online: https://apkmasondev.github.io/pinball-3d/**
+**▶ Zagraj online: https://apkmason.dev/pinball-3d/**
 
 Najlepiej na komputerze z klawiaturą, ze słuchawkami lub głośnikami. Działa też na telefonie i tablecie (sterowanie dotykiem) oraz z padem.
 
@@ -24,7 +24,7 @@ Repozytorium zawiera workflow `.github/workflows/deploy.yml`, który buduje grę
 
 1. Wypchnij repozytorium na GitHuba.
 2. Wejdź w **Settings → Pages** i jako **Source** wybierz **GitHub Actions**.
-3. Po zakończeniu akcji gra będzie dostępna pod `https://<użytkownik>.github.io/<repozytorium>/`.
+3. Po zakończeniu akcji gra będzie dostępna pod `https://<użytkownik>.github.io/<repozytorium>/` (albo pod własną domeną, jeśli jest ustawiona dla konta).
 
 ## Sterowanie
 
