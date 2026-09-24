@@ -22,7 +22,14 @@ export class BallsView {
     this.pmrem = new THREE.PMREMGenerator(stage.renderer);
     this.pmremRT = this.pmrem.fromCubemap(this.cubeRT.texture);
     this.geo = new THREE.SphereGeometry(radius, 40, 28);
-    this.mat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1.0, roughness: 0.05, envMap: this.pmremRT.texture, envMapIntensity: 1.2 });
+    this.mat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1.0, roughness: 0.05, envMap: this.pmremRT.texture, envMapIntensity: 1.5 });
+    // a mirror-polished sphere turns the key light into a tiny, enormously bright point that bloom smears over
+    // the whole ball; cap the direct highlight so it stays a crisp glint and the ball reads as chrome
+    this.mat.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <lights_fragment_end>',
+        '#include <lights_fragment_end>\n\treflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(2.5));');
+    };
+    this.mat.customProgramCacheKey = () => 'ball-chrome';
     this.meshes = new Map();
     // contact shadow
     const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -44,7 +51,7 @@ export class BallsView {
       let e = this.meshes.get(b.id);
       if (!e) {
         const mesh = new THREE.Mesh(this.geo, this.mat); mesh.castShadow = true;
-        const sh = new THREE.Mesh(this.shadowGeo, this.shadowMat); sh.renderOrder = 2;
+        const sh = new THREE.Mesh(this.shadowGeo, this.shadowMat.clone()); sh.renderOrder = 2;
         this.root.add(mesh, sh);
         e = { mesh, sh };
         this.meshes.set(b.id, e);
@@ -69,7 +76,7 @@ export class BallsView {
       e.sh.scale.set(s, 1, s);
       e.sh.material.opacity = onField ? 0.8 / s : 0.35;
     }
-    for (const [id, e] of this.meshes) if (!seen.has(id)) { this.root.remove(e.mesh, e.sh); this.meshes.delete(id); }
+    for (const [id, e] of this.meshes) if (!seen.has(id)) { this.root.remove(e.mesh, e.sh); e.sh.material.dispose(); this.meshes.delete(id); }
   }
   updateReflection(renderer, scene) {
     // refresh the cube map every other frame at the first ball's position
@@ -80,7 +87,12 @@ export class BallsView {
     first.mesh.getWorldPosition(this._wp);
     this.cubeCam.position.copy(this._wp);
     for (const e of this.meshes.values()) e.mesh.visible = false;
+    // above the table the capture would only see the black room: let the reflection pick up the
+    // soft night environment instead (moon panel, backbox glow), as a real ball mirrors the arcade around it
+    const bg = scene.background, bgI = scene.backgroundIntensity, bgB = scene.backgroundBlurriness;
+    scene.background = scene.environment; scene.backgroundIntensity = 2.4; scene.backgroundBlurriness = 0.15;
     this.cubeCam.update(renderer, scene);
+    scene.background = bg; scene.backgroundIntensity = bgI; scene.backgroundBlurriness = bgB;
     this.pmrem.fromCubemap(this.cubeRT.texture, this.pmremRT);
     renderer.setRenderTarget(null);
     for (const e of this.meshes.values()) e.mesh.visible = e.vis;

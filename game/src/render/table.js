@@ -108,7 +108,13 @@ function playfieldMaterial(base, emit, lampId, lamps, ao) {
           float g = 0.0;
           for (int i = 0; i < ${GI_SPOTS.length}; i++) { vec3 s = uGISpots[i]; float d = length(tp - s.xy) / s.z; g += 1.0 / (1.0 + d * d * d); }
           totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * g * 0.22 * uGI;
-        }`);
+        }`)
+      // the key/moon lights mirrored in the lacquer: keep them a soft sheen instead of a blooming hot spot
+      .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+        reflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(0.3));
+        #ifdef USE_CLEARCOAT
+          clearcoatSpecularDirect = min(clearcoatSpecularDirect, vec3(0.35));
+        #endif`);
   };
   // the AO is applied manually above (the built-in aoMap only affects indirect light)
   m.aoMap = null;
@@ -207,6 +213,8 @@ export class TableView {
       if (n === 'wire') m.envMapIntensity = 0.75;
       if (n.startsWith('lacquer')) m.envMapIntensity = 0.8;
       if (n === 'innerwall_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; }
+      // painted back panel: a touch of self-light so the moon halo reads behind the medallion
+      if (n === 'backpanel_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; m.emissive = new THREE.Color(1, 0.92, 0.85); m.emissiveMap = m.map; m.emissiveIntensity = 0.28; }
       if (n === 'backglass') { m.emissiveIntensity = 0.85; }
       if (m.map) m.map.anisotropy = 8;
       return m;
