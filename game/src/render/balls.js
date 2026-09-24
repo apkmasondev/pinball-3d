@@ -13,8 +13,8 @@ function apronEdge(x) {
 
 // Chrome balls with a live cube-map reflection of the table and a soft contact shadow.
 export class BallsView {
-  constructor(stage, tableRoot, radius) {
-    this.stage = stage; this.root = tableRoot; this.r = radius;
+  constructor(stage, tableRoot, radius, drainHoles = []) {
+    this.stage = stage; this.root = tableRoot; this.r = radius; this.holes = drainHoles;
     this.cubeRT = new THREE.WebGLCubeRenderTarget(128, { type: THREE.HalfFloatType, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     this.cubeCam = new THREE.CubeCamera(0.005, 3, this.cubeRT);
     stage.scene.add(this.cubeCam);
@@ -56,11 +56,12 @@ export class BallsView {
         e = { mesh, sh };
         this.meshes.set(b.id, e);
       }
-      // past the apron lip a draining ball drops through the gap and out of sight
+      // a draining ball rolls over the edge of the opening in front of the apron, drops onto the trough floor
+      // and rolls away under the apron (the physics keeps it on the playfield plane; this is its height)
       let sink = 0;
       if (b.mode === 'field') {
         const ey = apronEdge(b.x);
-        if (ey !== null && b.y < ey + this.r * 1.05) sink = Math.min(0.08, (ey + this.r * 1.05 - b.y) * 2.6);
+        if (ey !== null) sink = this._drop(b.x, b.y - ey);
       }
       setTV(e.mesh.position, b.x, b.y, b.z + this.r - sink);
       // ball quaternion is in table coords (x,y,z-up); convert to three local (x,z,-y)
@@ -77,6 +78,16 @@ export class BallsView {
       e.sh.material.opacity = onField ? 0.8 / s : 0.35;
     }
     for (const [id, e] of this.meshes) if (!seen.has(id)) { this.root.remove(e.mesh, e.sh); e.sh.material.dispose(); this.meshes.delete(id); }
+  }
+  // how far below the playfield plane the ball centre sits, at lip-space position (x, s = height above the lip)
+  _drop(x, s) {
+    const r = this.r;
+    const h = this.holes.find(q => x > q.x0 && x < q.x1);
+    if (!h) return s < r * 1.05 ? Math.min(0.08, (r * 1.05 - s) * 2.6) : 0;   // elsewhere: the thin gap along the lip
+    const u = h.d - s;                                  // how far the centre is past the opening's front edge
+    if (u <= 0) return 0;
+    if (u <= r) return r - Math.sqrt(r * r - u * u);    // rolling over the edge (touching it)
+    return Math.min(r + (u - r) * 1.4, 0.012 + 0.55 * u);  // falling, then resting on the sloped floor (build_table.py trough_floor_z)
   }
   updateReflection(renderer, scene) {
     // refresh the cube map every other frame at the first ball's position

@@ -80,7 +80,7 @@ async function boot() {
   ui.setLoading(0.92);
   table.root.rotation.x = world.o.slopeDeg * Math.PI / 180;
   stage.scene.add(table.root);
-  balls = new BallsView(stage, table.root, layout.BALL_R);
+  balls = new BallsView(stage, table.root, layout.BALL_R, layout.drainHoles);
   rig = new CameraRig(stage.camera, table.root);
   rig.setMode(settings.camera);
   stage.setQuality(settings.quality);

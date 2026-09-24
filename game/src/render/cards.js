@@ -60,7 +60,7 @@ export class ApronCards {
       mat.emissiveMap = mat.map;
       const m = new THREE.Mesh(geo, mat);
       m.rotation.x = -Math.PI / 2;
-      m.position.copy(tv((x0 + x1) / 2, (y0 + y1) / 2, 0.0185));   // just above the apron plate (APRON_Z 0.018)
+      m.position.copy(tv((x0 + x1) / 2, (y0 + y1) / 2, 0.0165));   // just above the apron plate (APRON_Z 0.016)
       m.receiveShadow = true;
       this.root.add(m); this.meshes.push(m);
     });

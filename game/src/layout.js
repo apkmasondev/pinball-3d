@@ -295,10 +295,19 @@ export function buildLayout() {
   lamp('inRlamp', 885, 1250, 18, '#ffffff', 'pill', { ang: Math.PI / 2, len: 70 });
 
   const drain = { y: P(0, 1760)[1] };
+  // openings in the playfield in front of the apron lip, where balls actually go under it (centre drain and
+  // both outlanes). Given in 'lip space': x range (m) and depth d measured up-table from the lip, top corners
+  // rounded by rc; each opening continues under the apron. Blender cuts them and builds the trough below,
+  // balls.js drops the ball into them.
+  const drainHoles = [
+    { x0: -0.046, x1: 0.046, d: 0.024, rc: 0.010 },
+    { x0: -0.214, x1: -0.166, d: 0.022, rc: 0.009 },
+    { x0: 0.156, x1: 0.204, d: 0.022, rc: 0.009 },
+  ];
 
   return {
     ART_W, ART_H, PX, TABLE_W, TABLE_L, BALL_R,
     walls: W, posts, slings, flippers, bumpers, drops, rollovers, spinner, gates, saucer, scoop, kickback, turntable,
-    plunger, ramp, vuk, lamps, drain,
+    plunger, ramp, vuk, lamps, drain, drainHoles,
   };
 }
