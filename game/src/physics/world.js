@@ -168,7 +168,7 @@ export class World {
       }
     };
     for (const w of L.walls) addPoly(w.pts, w.r, w.mat, 'wall', w.id);
-    for (const p of L.posts) this.circles.push({ x: p.p[0], y: p.p[1], r: p.r, mat: p.kind === 'metal' ? 'metal' : 'post', kind: 'post', id: p.id });
+    for (const p of L.posts) this.circles.push({ x: p.p[0], y: p.p[1], r: p.r, mat: p.kind === 'metal' || p.kind === 'support' ? 'metal' : 'post', kind: 'post', id: p.id });
     for (const s of L.slings) {
       const rr = s.postR + s.rubberR;
       for (const v of [s.T, s.Bo, s.Bi]) this.circles.push({ x: v[0], y: v[1], r: rr, mat: 'rubber', kind: 'post', id: s.id + 'Post' });

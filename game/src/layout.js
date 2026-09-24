@@ -149,10 +149,12 @@ export function buildLayout() {
   ];
 
   // --- pop bumpers (jets) ---
+  // one centred under the lane exits, two staggered below: lane balls strike a shoulder and fan out,
+  // and every gap passes a ball cleanly (a ball-width gap under the lanes used to trap it for 10 s+)
   const bumpers = [
-    { id: 'bumper0', p: P(262, 392), r: L(48), cap: 'lantern' },
-    { id: 'bumper1', p: P(412, 372), r: L(48), cap: 'lotus' },
-    { id: 'bumper2', p: P(340, 535), r: L(48), cap: 'koi' },
+    { id: 'bumper0', p: P(274, 560), r: L(48), cap: 'lantern' },
+    { id: 'bumper1', p: P(312, 391), r: L(48), cap: 'lotus' },
+    { id: 'bumper2', p: P(422, 608), r: L(48), cap: 'koi' },
   ];
 
   // --- drop targets (K-O-I): bank square to the shot line from the right flipper ---
@@ -219,6 +221,39 @@ export function buildLayout() {
     plasticUntil: 0.43,     // fraction of path that is a plastic ramp; the rest is a wire habitrail
     exitSpeedMin: 0.5,
   };
+  // Near its entrance the bridge deck hangs lower than a ball: close both edges (and cap them) up to
+  // where the deck clears a ball, so nothing rolls through the bridge from the side.
+  {
+    const art = spline(rampCtrl, 10);
+    const clear = 2 * BALL_R + 0.0055;                 // deck underside sits 3.5 mm below its surface
+    let k = 0; while (k < art.length - 1 && art[k][2] < clear) k++;
+    const nrm = (i) => {
+      const a = art[Math.max(0, i - 1)], b = art[Math.min(art.length - 1, i + 1)];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]); return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    };
+    const edge = (sg) => art.slice(0, k + 1).map((q, i) => [q, nrm(i)]).filter(([q]) => q[1] < 660)
+      .map(([q, n]) => [q[0] + n[0] * 46 * sg, q[1] + n[1] * 46 * sg]);
+    const eA = edge(1), eB = edge(-1);
+    wall('rampEdgeA', eA, { t: 6, mat: 'plastic', h: 0.03, style: 'hidden' });
+    wall('rampEdgeB', eB, { t: 6, mat: 'plastic', h: 0.03, style: 'hidden' });
+    wall('rampUnderCap', [eA[eA.length - 1], eB[eB.length - 1]], { t: 6, mat: 'plastic', h: 0.03, style: 'hidden' });
+  }
+  // gold posts carrying the plastic deck: solid for balls passing under the bridge (Blender builds them from here)
+  ramp.supports = [];
+  {
+    const pts = ramp.path.slice(0, Math.floor(ramp.path.length * ramp.plasticUntil) + 1);
+    const step = Math.floor(pts.length / 5);
+    for (let i = step; i < pts.length; i += step) {
+      const q = pts[i]; if (q[2] <= 0.02) continue;
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]), nx = -(b[1] - a[1]) / l, ny = (b[0] - a[0]) / l;
+      for (const sg of [1, -1]) {
+        const sp = { p: [q[0] + nx * 0.025 * sg, q[1] + ny * 0.025 * sg], h: q[2] - 0.002 };
+        ramp.supports.push(sp);
+        posts.push({ id: `rampSupport${i}_${sg > 0 ? 'a' : 'b'}`, p: sp.p, r: 0.0018, kind: 'support' });
+      }
+    }
+  }
   // Scoop VUK habitrail to the left inlane
   const vukCtrl = [
     [543, 300, 0.0], [543, 292, 0.05], [520, 268, 0.078], [470, 236, 0.086], [380, 212, 0.086], [290, 222, 0.084],
