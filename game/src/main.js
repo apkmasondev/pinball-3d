@@ -102,6 +102,7 @@ async function boot() {
   // DMD on the backbox
   const dmdTex = new THREE.CanvasTexture(display.canvas);
   dmdTex.colorSpace = THREE.SRGBColorSpace;
+  dmdTex.flipY = false;            // the screen's UVs come from glTF (V already flipped)
   if (table.dyn.dmdScreen) {
     table.dyn.dmdScreen.traverse(o => { if (o.isMesh) o.material = new THREE.MeshBasicMaterial({ map: dmdTex, toneMapped: false }); });
   }

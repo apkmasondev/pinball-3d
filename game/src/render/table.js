@@ -216,6 +216,8 @@ export class TableView {
       // painted back panel: a touch of self-light so the moon halo reads behind the medallion
       if (n === 'backpanel_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; m.emissive = new THREE.Color(1, 0.92, 0.85); m.emissiveMap = m.map; m.emissiveIntensity = 0.28; }
       if (n === 'backglass') { m.emissiveIntensity = 0.85; }
+      // head panels around the display: a faint glow so the art reads in the dark room, never competing with the table
+      if (n === 'speakerpanel_art' || n === 'neckpanel_art') { m.clearcoat = 0.2; m.roughness = 0.5; m.envMapIntensity = 0.4; m.emissive = new THREE.Color(1, 0.9, 0.82); m.emissiveMap = m.map; m.emissiveIntensity = n === 'neckpanel_art' ? 0.35 : 0.45; }
       if (m.map) m.map.anisotropy = 8;
       return m;
     };
