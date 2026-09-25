@@ -23,7 +23,7 @@ const F5 = {
   '%': '11001,11010,00010,00100,01000,01011,10011', '#': '01010,11111,01010,01010,11111,01010,00000', '<': '00010,00100,01000,10000,01000,00100,00010', '>': '01000,00100,00010,00001,00010,00100,01000',
   '*': '00000,10101,01110,11111,01110,10101,00000', '●': '00000,01110,11111,11111,11111,01110,00000', '○': '00000,01110,10001,10001,10001,01110,00000',
 };
-const PL = { 'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z' };
+const PL = { 'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z', 'Ū': 'U', 'Ō': 'O' };
 const GLYPH = {};
 for (const k in F5) GLYPH[k] = F5[k].split(',').map(r => [...r].map(c => c === '1'));
 
@@ -58,6 +58,12 @@ export class Display {
     this.fontFamily = '"Marcellus", "Shippori Mincho", serif';
   }
 
+  // per-table look: dot colour, the faint unlit dots, attract texts
+  setTheme(def) {
+    this.color = def.dmd; this.unlitColor = def.dmdUnlit; this.attractDef = def.attract;
+    this.hudNames = def.id === 'ryujin' ? { tsukimi: 'RYUGU', frenzy: 'UZUMAKI' } : { tsukimi: 'TSUKIMI', frenzy: 'FRENZY' };
+    this._buildMask(); this.shown.fill(-1);
+  }
   _buildMask() {
     const S = this.S;
     const m = document.createElement('canvas'); m.width = W * S; m.height = H * S;
@@ -67,7 +73,7 @@ export class Display {
     this.mask = m;
     const u = document.createElement('canvas'); u.width = W * S; u.height = H * S;
     const uc = u.getContext('2d');
-    uc.fillStyle = 'rgba(255,120,40,0.075)';
+    uc.fillStyle = this.unlitColor || 'rgba(255,120,40,0.075)';
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { uc.beginPath(); uc.arc(x * S + S / 2, y * S + S / 2, S * 0.4, 0, Math.PI * 2); uc.fill(); }
     this.unlit = u;
     this.tmp = document.createElement('canvas'); this.tmp.width = W * S; this.tmp.height = H * S;
@@ -174,6 +180,42 @@ export class Display {
         for (let y = 6; y < 28; y++) { this.px(107, y, 0.66); this.px(118, y, 0.66); }
         break;
       }
+      case 'pearl': {
+        // a pearl rising through water with drifting bubbles
+        const y = 36 - Math.min(1, t / 0.7) * 20;
+        for (const cx of [14, 114]) {
+          this.circle(cx, y, 7, 0.66, true); this.circle(cx, y, 9, 0.33);
+          this.px(cx - 3, y - 3, 1); this.px(cx - 2, y - 3, 1); this.px(cx - 3, y - 2, 1);
+          for (let i = 0; i < 5; i++) { const by = (y - 10 - ((t * 14 + i * 7) % 26)); this.px(cx + Math.sin(t * 3 + i) * 4, by, 0.33); }
+        }
+        break;
+      }
+      case 'whirl': {
+        // a spiral turning around the centre of the display
+        for (let i = 0; i < 180; i++) {
+          const a = i * 0.21 + t * 6, r = i * 0.33;
+          this.px(64 + Math.cos(a) * r * 1.6, 16 + Math.sin(a) * r * 0.5, i % 3 === 0 ? 0.66 : 0.33);
+        }
+        break;
+      }
+      case 'waves': {
+        for (let x = 0; x < W; x++) {
+          const y1 = 27 + Math.sin(x * 0.18 + t * 6) * 2.5, y2 = 4 + Math.sin(x * 0.15 - t * 5) * 2;
+          this.px(x, y1, 0.5); this.px(x, y1 + 1, 0.25); this.px(x, y2, 0.33);
+        }
+        break;
+      }
+      case 'dragon': {
+        // a sea serpent swimming across, its body a travelling sine
+        const hx = ((t * 80) % 200) - 36;
+        for (let k = 0; k < 60; k++) {
+          const x = hx - k, y = 16 + Math.sin(k * 0.22 - t * 8) * 7 * Math.min(1, k / 10);
+          const w = k < 6 ? 2.5 : Math.max(0.5, 2.2 - k * 0.03);
+          for (let j = -w; j <= w; j++) this.px(x, y + j, k < 6 ? 1 : 0.5);
+        }
+        this.px(hx + 2, 14, 0); this.px(hx + 3, 12, 1); this.px(hx + 4, 11, 1);
+        break;
+      }
       case 'lanes': {
         // three lamps lighting in sequence at the far edges
         for (let i = 0; i < 3; i++) { const on = t > i * 0.15; this.circle(4, 6 + i * 10, 2, on ? 0.8 : 0.2, true); this.circle(123, 6 + i * 10, 2, on ? 0.8 : 0.2, true); }
@@ -197,9 +239,10 @@ export class Display {
     this.textBig(s, 64, 12, 21, 1, 124);
     let left = `${this.strings.ball || 'BALL'} ${h.ball}`;
     let right = h.bonusX > 1 ? `${h.bonusX}X` : '';
+    const hn = this.hudNames || { tsukimi: 'TSUKIMI', frenzy: 'FRENZY' };
     if (h.mb) right = 'MULTIBALL';
-    else if (h.tsukimi > 0) right = `TSUKIMI ${Math.ceil(h.tsukimi)}`;
-    else if (h.frenzy > 0) right = `FRENZY ${Math.ceil(h.frenzy)}`;
+    else if (h.tsukimi > 0) right = `${hn.tsukimi} ${Math.ceil(h.tsukimi)}`;
+    else if (h.frenzy > 0) right = `${hn.frenzy} ${Math.ceil(h.frenzy)}`;
     else if (h.lockLit) right = 'LOCK LIT';
     this.text5(left, 1, 25, 0.66);
     this.text5(right, 127, 25, 0.66, 'right');
@@ -215,10 +258,11 @@ export class Display {
 
   _attract() {
     const cycle = 16, t = this.t % cycle;
+    const A = this.attractDef || { title: 'TSUKIMI', sub: 'MOONLIT KOI GARDEN', anim: 'moonrise' };
     if (t < 5) {
-      this.anim('moonrise', t);
-      this.textBig('TSUKIMI', 64, 12, 20, 1, 100);
-      this.text5('MOONLIT KOI GARDEN', 64, 24, 0.5, 'center');
+      this.anim(A.anim, t);
+      this.textBig(A.title, 64, 12, 20, 1, 100);
+      this.text5(A.sub, 64, 24, 0.5, 'center');
     } else if (t < 11) {
       const hs = this.hiscores;
       const k = Math.floor((t - 5) / 2);
@@ -227,7 +271,7 @@ export class Display {
         for (let i = 0; i < 2; i++) { const e = hs[(k - 1) * 2 + 1 + i]; if (e) this.text5(`${(k - 1) * 2 + 2 + i}. ${e.name} ${e.score.toLocaleString('en-US')}`, 64, 4 + i * 13, 0.8, 'center'); }
       }
     } else {
-      this.anim('koi', t);
+      this.anim(A.anim === 'pearl' ? 'dragon' : 'koi', t);
       this.textBig(this.strings.pressStart || 'PRESS START', 64, 15, 13, Math.floor(this.t * 2) % 2 ? 1 : 0.66, 118);
     }
   }

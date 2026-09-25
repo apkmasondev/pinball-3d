@@ -45,6 +45,11 @@ export class BallsView {
     this._qt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
     this._wp = new THREE.Vector3();
   }
+  // switching tables: balls are gone by then; forget their meshes and follow the new table root
+  setRoot(root) {
+    for (const [, e] of this.meshes) { e.mesh.removeFromParent(); e.sh.removeFromParent(); e.sh.material.dispose(); }
+    this.meshes.clear(); this.root = root;
+  }
   sync(balls, dt) {
     const stamp = ++this._stamp;
     for (const b of balls) {

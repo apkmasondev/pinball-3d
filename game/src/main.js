@@ -1,33 +1,34 @@
 import * as THREE from 'three';
-import { buildLayout } from './layout.js';
 import { World } from './physics/world.js';
+import { TABLES, TABLE_IDS } from './tables.js';
+import { loadHighScores } from './game/rules.js';
 import { Stage } from './render/stage.js';
 import { TableView } from './render/table.js';
 import { BallsView } from './render/balls.js';
 import { CameraRig } from './render/camera.js';
 import { Input } from './input.js';
 import { Display } from './game/display.js';
-import { Rules, T as RT } from './game/rules.js';
 import { Audio } from './audio/audio.js';
 import { UI } from './ui/ui.js';
 import { Bot } from './game/bot.js';
 import { ApronCards } from './render/cards.js';
 
 // ------------------------------------------------------------------ settings
-const DEFAULTS = { lang: (navigator.language || 'pl').startsWith('pl') ? 'pl' : 'en', camera: 'player', quality: 'auto', balls: 3, master: 0.85, music: 0.65, sfx: 0.9, mute: false };
+const DEFAULTS = { lang: (navigator.language || 'pl').startsWith('pl') ? 'pl' : 'en', camera: 'player', quality: 'auto', balls: 3, master: 0.85, music: 0.65, sfx: 0.9, mute: false, table: 'tsukimi' };
 const settings = (() => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('tsukimi.settings') || '{}') }; } catch (e) { return { ...DEFAULTS }; } })();
 const saveSettings = () => { try { localStorage.setItem('tsukimi.settings', JSON.stringify(settings)); } catch (e) { } };
 
-const layout = buildLayout();
-const world = new World(layout);
+if (!TABLES[settings.table]) settings.table = 'tsukimi';
 const input = new Input();
 const display = new Display();
 const audio = new Audio(settings);
-let stage, table, rules, rig, balls, ui, bot, cards;
-let mode = 'loading';          // loading | title | game | pause | initials
+// the loaded table: its definition, layout, physics, view and rules are swapped together by loadTable()
+let def = TABLES[settings.table], layout, world, table, rules, bot, cards;
+let stage, rig, balls, ui;
+let mode = 'loading';          // loading | title | game | pause | initials | switching
 let paused = false;
 
-const halfW = layout.TABLE_W / 2;
+let halfW = 0.27;
 const panOf = (b) => b ? Math.max(-1, Math.min(1, b.x / halfW)) * 0.8 : 0;
 
 // ------------------------------------------------------------------ effects
@@ -67,7 +68,11 @@ async function boot() {
     initials: (name) => submitInitials(name),
     highScores: () => rules ? rules.highScores : [],
     sound: (n) => audio.play(n),
+    tables: () => TABLE_IDS.map(id => ({ def: TABLES[id], best: loadHighScores(TABLES[id].hsKey, TABLES[id].hsDefault)[0], current: id === def.id })),
+    selectTable: (id) => switchTable(id),
+    cycleTable: (dir) => switchTable(otherTable(dir)),
   });
+  ui.setTable(def);
   ui.show('loading');
   ui.setLoading(0.05);
   const canvas = document.getElementById('gl');
@@ -76,23 +81,17 @@ async function boot() {
     ui.setLoading(0, settings.lang === 'pl' ? 'Ta przeglądarka nie obsługuje grafiki WebGL 2' : 'This browser does not support WebGL 2 graphics');
     return;
   }
-  table = new TableView(layout, world);
   // mobile browsers may drop the GPU context in the background; a fresh start is the only clean recovery
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (mode === 'game') setPaused(true); });
   canvas.addEventListener('webglcontextrestored', () => location.reload());
   display.lang = settings.lang;
   document.fonts && document.fonts.load('20px "Marcellus"').then(() => display.textCache.clear()).catch(() => { });
 
+  audio.setTable(def);
   const audioP = (async () => { try { await audio.init(); } catch (e) { console.warn('audio init failed', e); } })();
-  await table.build(stage.renderer, (p) => ui.setLoading(0.1 + p * 0.8));
-  ui.setLoading(0.92);
-  table.root.rotation.x = world.o.slopeDeg * Math.PI / 180;
-  stage.scene.add(table.root);
-  balls = new BallsView(stage, table.root, layout.BALL_R, layout.drainHoles);
-  rig = new CameraRig(stage.camera, table.root);
+  rig = new CameraRig(stage.camera, null);
   rig.setMode(settings.camera);
-  table.addGlass(stage.scene.environment);
-  applyQuality();
+  balls = new BallsView(stage, null, 0.0135, []);
   // arcade floor with a soft pool of light under the machine
   {
     const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -105,21 +104,13 @@ async function boot() {
     floor.rotation.x = -Math.PI / 2; floor.position.set(0, -0.88, -0.4); floor.receiveShadow = true;
     stage.scene.add(floor);
   }
-
-  cards = new ApronCards(table.root);
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => cards.build(settings.lang));
   const hudCtx = ui.dmdCanvas.getContext('2d');
   ui.dmdCanvas.width = display.canvas.width; ui.dmdCanvas.height = display.canvas.height;
 
-  rules = new Rules({
-    world, lamps: table.lamps, display, audio, fx, layout, settings,
-    onGameOver: () => toTitle(),
-    onHighScore: (score) => { mode = 'initials'; display.mode = 'initials'; ui.startInitials(score); display.initials = ui.initials; },
-  });
-  applyStrings();
+  await loadTable(settings.table, (p) => ui.setLoading(0.1 + p * 0.8));
+  ui.setLoading(0.92);
   bindInput();
-  bot = new Bot(world, layout, input);
-  if (import.meta.env.DEV) window.__game = { world, table, stage, rig, rules, audio, display, ui, layout, fx, balls, bot, input, settings };
+  if (import.meta.env.DEV) window.__game = { get world() { return world; }, get table() { return table; }, get rules() { return rules; }, get bot() { return bot; }, get layout() { return layout; }, stage, rig, audio, display, ui, fx, balls, input, settings, switchTable };
   await Promise.race([audioP, new Promise(r => setTimeout(r, 4000))]);
   ui.setLoading(1);
   setTimeout(() => toTitle(), 250);
@@ -193,7 +184,59 @@ function watchPerf(dt) {
   }
 }
 
+// ------------------------------------------------------------------ tables
+// Builds the whole table (layout, physics, 3D view, rules, attract bot, apron cards, theme) and swaps it in.
+async function loadTable(id, onProgress) {
+  const d = TABLES[id] || TABLES.tsukimi;
+  const L = d.layout();
+  const W = new World(L);
+  const view = new TableView(L, W, d);
+  await view.build(stage.renderer, onProgress);
+  view.root.rotation.x = W.o.slopeDeg * Math.PI / 180;
+  view.addGlass(stage.scene.environment);
+  if (table) table.dispose();
+  def = d; layout = L; world = W; table = view; halfW = L.TABLE_W / 2;
+  stage.scene.add(view.root);
+  balls.setRoot(view.root); balls.r = L.BALL_R; balls.holes = L.drainHoles;
+  rig.root = view.root; rig.snap = true;
+  if (cards) cards.dispose();
+  cards = new ApronCards(view.root, d);
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { if (cards && cards.def === d) cards.build(settings.lang); });
+  rules = new d.Rules({
+    world, lamps: view.lamps, display, audio, fx, layout, settings, table: d,
+    onGameOver: () => toTitle(),
+    onHighScore: (score) => { mode = 'initials'; display.mode = 'initials'; ui.startInitials(score); display.initials = ui.initials; },
+  });
+  bot = new Bot(world, layout, input);
+  display.setTheme(d); audio.setTable(d);
+  fx.show = null; fx.flashV = 0;
+  applyQuality(); applyStrings();
+  ui.setTable(d);
+}
+
+let switching = false;
+async function switchTable(id) {
+  if (switching || !TABLES[id]) return;
+  if (id === def.id) { ui.show('title'); return; }
+  switching = true; mode = 'switching';
+  ui.veil(true, TABLES[id].loading[settings.lang] || TABLES[id].loading.en, TABLES[id].kanji);
+  audio.music(null);
+  bot && bot.stop();
+  await new Promise(r => setTimeout(r, 450));
+  try {
+    for (const b of [...world.balls]) world.removeBall(b);
+    await loadTable(id, (p) => ui.veilProgress(p));
+    settings.table = id; saveSettings();
+    await stage.renderer.compileAsync(stage.scene, stage.camera).catch(() => { });
+  } catch (e) { console.error('table load failed', e); }
+  switching = false;
+  toTitle();
+  ui.veil(false);
+}
+const otherTable = (dir = 1) => TABLE_IDS[(TABLE_IDS.indexOf(def.id) + dir + TABLE_IDS.length) % TABLE_IDS.length];
+
 function applyStrings() {
+  const RT = rules.T;
   const tr = RT[settings.lang] || RT.en;
   display.strings = { ball: tr.ball, highScore: tr.highScore, pressStart: tr.pressStart, enterInitials: tr.enterInitials };
   rules.lang = settings.lang;
@@ -202,7 +245,7 @@ function applyStrings() {
 
 function applySetting(k, v) {
   settings[k] = v; saveSettings();
-  if (k === 'lang') { applyStrings(); cards && cards.build(v); }
+  if (k === 'lang') { applyStrings(); cards && cards.build(v); ui.setTable(def); }
   if (k === 'camera') rig.setMode(v);
   if (k === 'quality') { if (v === 'auto') stage.autoLevel = null; applyQuality(); }
   if (['master', 'music', 'sfx', 'mute'].includes(k)) audio.applyVolumes();
@@ -223,11 +266,12 @@ function toTitle() {
 let demoT = -1;
 function demoTick(dt) {
   // the machine plays itself behind the title screen
-  if (mode !== 'title') return;
+  if (mode !== 'title' || switching) return;
   if (demoT > 0) { demoT -= dt; if (demoT <= 0) { world.addBall(layout.plunger.x, layout.plunger.ballY); bot.start(true); } return; }
   if (world.balls.length === 0 && demoT <= 0) demoT = 2.0;
 }
 function startGame() {
+  if (switching) return;
   bot.stop(); demoT = -1;
   audio.init().then(() => audio.resume());
   mode = 'game'; paused = false;
@@ -258,8 +302,11 @@ function submitInitials(name) {
 // ------------------------------------------------------------------ input
 function bindInput() {
   const gameActive = () => mode === 'game' && !paused;
+  // on the title screen the flipper buttons browse the tables
+  const browse = (dir) => { if (ui.screen === 'tables') ui.tablesMove(dir); else if (ui.screen === 'title') switchTable(otherTable(dir)); };
   input.on('left', (on) => {
     if (mode === 'initials') { if (on) ui.initialsCycle(-1); return; }
+    if (mode === 'title') { if (on) browse(-1); return; }
     if (!gameActive()) return;
     world.setFlipper('L', on);
     if (!world.tiltDisabled) audio.play(on ? 'flipperUp' : 'flipperDown', 1, { pan: -0.35 });
@@ -267,6 +314,7 @@ function bindInput() {
   });
   input.on('right', (on) => {
     if (mode === 'initials') { if (on) ui.initialsCycle(1); return; }
+    if (mode === 'title') { if (on) browse(1); return; }
     if (!gameActive()) return;
     world.setFlipper('R', on);
     if (!world.tiltDisabled) audio.play(on ? 'flipperUp' : 'flipperDown', 1, { pan: 0.35 });
@@ -274,13 +322,22 @@ function bindInput() {
   });
   input.on('plunger', (on, code) => {
     audio.resume();
-    if (mode === 'title') { if (on && (code === 'Enter' || code === 'Space' || code === 'NumpadEnter' || code === undefined)) startGame(); return; }
+    if (mode === 'title') {
+      if (!on) return;
+      if (ui.screen === 'tables') { ui.tablesConfirm(); return; }
+      if (ui.screen === 'title' && (code === 'Enter' || code === 'Space' || code === 'NumpadEnter' || code === undefined)) {
+        // Enter on a focused menu button runs that button (keyboard navigation); otherwise it starts a game
+        const f = document.activeElement;
+        if (f && f.dataset && f.dataset.a && f.dataset.a !== 'play' && code !== 'Space') ui.action(f.dataset.a); else startGame();
+      }
+      return;
+    }
     if (mode === 'initials') { if (on && ui.initialsNext()) submitInitials(ui.initials.letters.join('')); return; }
     if (!gameActive()) return;
     if (world.ballInShooter()) { world.pullPlunger(on); if (on) audio.play('plungerPull'); }
     else if (!on) world.pullPlunger(false);
   });
-  input.on('start', (on) => { if (on && mode === 'title') startGame(); });
+  input.on('start', (on) => { if (on && mode === 'title' && ui.screen === 'title') startGame(); });
   const nudge = (dx, dy, cx, cy) => (on) => {
     if (!on || !gameActive()) return;
     world.nudge(dx, dy); rig.nudgeKick(cx, cy); rules.nudge(); audio.play('ballSearch', 0.8);
@@ -292,7 +349,7 @@ function bindInput() {
   input.on('pause', (on) => {
     if (!on) return;
     // a sub-screen (settings / help / scores) closes first, also when it was opened from the pause menu
-    if (['settings', 'help', 'scores'].includes(ui.screen)) ui.action('back');
+    if (['settings', 'help', 'scores', 'tables'].includes(ui.screen)) ui.action('back');
     else if (mode === 'game') setPaused(true);
     else if (mode === 'pause') setPaused(false);
   });
@@ -311,7 +368,7 @@ function bindInput() {
 
 // ------------------------------------------------------------------ physics event sounds
 function eventSound(e) {
-  if (mode === 'title') return;   // demo play stays silent under the music
+  if (mode === 'title' || mode === 'switching') return;   // demo play stays silent under the music
   const pan = panOf(e.ball);
   switch (e.type) {
     case 'bumper': audio.play('bumper', 1, { pan }); rig.kick(0.12); break;

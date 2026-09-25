@@ -11,6 +11,8 @@ export const T = {
     ball: 'BALL', player: 'PLAYER', highScore: 'HIGH SCORE', enterInitials: 'ENTER INITIALS', lantern: 'LANTERN LEVEL',
     moonPhase: 'MOON PHASE', total: 'TOTAL', pressStart: 'PRESS START', ballSaveLit: 'BALL SAVE', lockN: 'LOCK', jackpotsLit: 'JACKPOTS LIT',
     points: 'POINTS', koiBank: 'KOI COMPLETE', timeLeft: 'TIME',
+    tsukimiSub: '2X · MOON SHOTS 100K', moonShot: 'MOON SHOT', shrine: 'SHRINE', over: 'OVER', complete: 'COMPLETE',
+    bonusDrops: 'KOI', bonusJets: 'LANTERNS', bonusSpinner: 'SPINNER',
   },
   pl: {
     ballSaved: 'KULKA URATOWANA', skill: 'SKILL SHOT', lock: 'LOCK AKTYWNY', locked: 'KULKA ZABLOKOWANA', multiball: 'MOON MULTIBALL',
@@ -21,6 +23,8 @@ export const T = {
     ball: 'KULKA', player: 'GRACZ', highScore: 'REKORD', enterInitials: 'WPISZ INICJAŁY', lantern: 'POZIOM LATARNI',
     moonPhase: 'FAZA KSIĘŻYCA', total: 'SUMA', pressStart: 'NACIŚNIJ START', ballSaveLit: 'OCHRONA KULKI', lockN: 'LOCK', jackpotsLit: 'JACKPOTY AKTYWNE',
     points: 'PKT', koiBank: 'KOI KOMPLET', timeLeft: 'CZAS',
+    tsukimiSub: '2X · MOON SHOTS 100K', moonShot: 'MOON SHOT', shrine: 'CHRAM', over: 'KONIEC', complete: 'UKOŃCZONY',
+    bonusDrops: 'KOI', bonusJets: 'LATARNIE', bonusSpinner: 'SPINNER',
   },
 };
 
@@ -28,14 +32,21 @@ const fmt = (n) => n.toLocaleString('en-US');
 
 export class Rules {
   constructor(api) {
-    this.api = api; // { world, lamps, display, audio, fx, layout, settings, onGameOver }
+    this.api = api; // { world, lamps, display, audio, fx, layout, settings, onGameOver, table }
+    this.def = api.table || {};
+    this.T = T;
+    this.jpBase0 = 250000; this.superBase = 1000000; this.loopBase = 50000;
     this.timers = [];
     this.state = 'attract';
-    this.highScores = loadHighScores();
+    this.hsKey = this.def.hsKey || 'tsukimi.hiscores';
+    this.highScores = loadHighScores(this.hsKey, this.def.hsDefault);
     this.t = 0;
     this.lang = api.settings.lang || 'en';
   }
-  tr(k) { return (T[this.lang] || T.en)[k] || T.en[k] || k; }
+  tr(k) { const S = this.T; return (S[this.lang] || S.en)[k] || S.en[k] || T.en[k] || k; }
+  // table hooks: extra per-player / per-ball state
+  _initPlayer(p) { }
+  _initBall(b) { }
 
   // ------------------------------------------------------------------ game flow
   startGame() {
@@ -47,13 +58,14 @@ export class Rules {
       score: 0, ball: 1, balls: this.api.settings.balls || 3, extraBalls: 0, extraBallLit: false, extraBallAwarded: 0,
       bonusX: 1, lanes: [false, false, false], lowerLanes: [false, false, false, false],
       lockLit: false, locked: 0, mbCount: 0, moon: 0, fullMoonReady: false, lanternLevel: 0, bumperHits: 0,
-      dropBanks: 0, skillCount: 0, tiltWarnings: 0, mysteryCount: 0, jpBase: 250000,
+      dropBanks: 0, skillCount: 0, tiltWarnings: 0, mysteryCount: 0, jpBase: this.jpBase0,
     };
+    this._initPlayer(this.p);
     this.api.world.kickback.lit = true;
     this.api.audio.play('start');
     this.api.audio.music('main');
     this.api.display.clearQueue();
-    this.api.display.show({ big: this.tr('ball') + ' 1', small: 'TSUKIMI', dur: 1.6, anim: 'moonrise' });
+    this.api.display.show({ big: this.tr('ball') + ' 1', small: this.def.name || 'TSUKIMI', dur: 1.6, anim: this.modeAnim || 'moonrise' });
     this._startBall(true);
   }
 
@@ -66,6 +78,7 @@ export class Rules {
       mb: false, jpLit: [false, false, false], superLit: false, jpCollected: 0,
       frenzyUntil: 0, tsukimiUntil: 0, pendingBalls: 0, bonusCounting: false,
     };
+    this._initBall(this.b);
     this.api.world.tiltDisabled = false;
     this.api.fx.tilt(false);
     for (const d of this.api.world.drops) { d.up = true; }
@@ -245,14 +258,14 @@ export class Rules {
       this._moon(1);
       const other = kind === 'orbitL' ? 'orbitR' : 'orbitL';
       if (b.lastShot === other && now - b.lastShotT < 4) {
-        b.loops++; const lv = this.add(50000 * b.loops);
+        b.loops++; const lv = this.add(this.loopBase * b.loops);
         A.audio.play('koiLoop'); combo = false;
         if (!this._jackpot(kind === 'orbitL' ? 1 : 2)) A.display.show({ big: this.tr('koiLoop'), small: fmt(lv), dur: 1.4, prio: 2, anim: 'koi' });
       } else if (!this._jackpot(kind === 'orbitL' ? 1 : 2)) A.display.show({ big: this.tr('orbit'), small: fmt(v), dur: 1.0, prio: 1 });
     }
     if (this.t < b.tsukimiUntil) {
       const v = this.add(100000);
-      A.audio.play('moonShot'); A.display.show({ big: 'MOON SHOT', small: fmt(v), dur: 1.2, prio: 3, anim: 'moonrise' });
+      A.audio.play('moonShot'); A.display.show({ big: this.tr('moonShot'), small: fmt(v), dur: 1.2, prio: 3, anim: this.modeAnim || 'moonrise' });
     }
     if (combo) {
       b.comboN = (b.comboN || 0) + 1;
@@ -338,7 +351,7 @@ export class Rules {
     this.add(10000);
     if (b.mb && b.superLit) {
       b.superLit = false;
-      const v = this.add(1000000 + 250000 * (p.mbCount - 1));
+      const v = this.add(this.superBase + 250000 * (p.mbCount - 1));
       A.audio.play('superJackpot'); A.fx.flash(1.4, 0xfff0c0); A.fx.kick(1); A.fx.lightShow('super', 3);
       A.display.show({ big: this.tr('superJackpot'), small: fmt(v), dur: 3.0, prio: 6, anim: 'super' });
       b.jpLit = [true, true, true]; p.jpBase *= 2; hold = 2.6;
@@ -352,7 +365,7 @@ export class Rules {
       A.world.turntable.target = 4.0;
       A.audio.play('tsukimiStart'); this._music();
       A.fx.lightShow('tsukimi', 2.5);
-      A.display.show({ big: this.tr('tsukimi'), small: '2X · MOON SHOTS 100K', dur: 2.8, prio: 5, anim: 'moonrise' }); hold = 2.8;
+      A.display.show({ big: this.tr('tsukimi'), small: this.tr('tsukimiSub'), dur: 2.8, prio: 5, anim: this.modeAnim || 'moonrise' }); hold = 2.8;
     } else if (p.lockLit && !b.mb) {
       p.locked++;
       A.audio.play('lock'); A.fx.flash(0.6, 0xff8080);
@@ -364,7 +377,7 @@ export class Rules {
         A.display.show({ big: this.tr('locked'), small: `${this.tr('lockN')} ${p.locked}/2`, dur: 1.8, prio: 4, anim: 'lock' }); hold = 1.6;
       }
     } else {
-      A.display.show({ big: 'SHRINE', small: fmt(10000), dur: 0.9, prio: 1 });
+      A.display.show({ big: this.tr('shrine'), small: fmt(10000), dur: 0.9, prio: 1 });
     }
     A.world.holdBall(e.ball, hold);
   }
@@ -412,10 +425,10 @@ export class Rules {
     if (!b.tilted) {
       lines.push([this.tr('ramp'), b.ramps, 5000]);
       lines.push([this.tr('orbit'), b.orbits, 3000]);
-      lines.push(['KOI', b.drops, 1500]);
+      lines.push([this.tr('bonusDrops'), b.drops, 1500]);
       lines.push([this.tr('lanes'), b.lanes, 1000]);
-      lines.push(['LANTERNS', b.bumpers, 100]);
-      lines.push(['SPINNER', b.spins, 20]);
+      lines.push([this.tr('bonusJets'), b.bumpers, 100]);
+      lines.push([this.tr('bonusSpinner'), b.spins, 20]);
     }
     let total = lines.reduce((s, l) => s + l[1] * l[2], 0);
     const seq = [];
@@ -475,7 +488,7 @@ export class Rules {
     this.highScores.push(entry);
     this.highScores.sort((a, b) => b.score - a.score);
     this.highScores = this.highScores.slice(0, 5);
-    saveHighScores(this.highScores);
+    saveHighScores(this.hsKey, this.highScores);
     this.state = 'attract';
     this.api.onGameOver && this.api.onGameOver(this.p.score);
   }
@@ -537,12 +550,12 @@ export class Rules {
     if (this.t > b.frenzyUntil && b.frenzyUntil > 0) {
       b.frenzyUntil = 0; A.world.turntable.target = this.t < b.tsukimiUntil ? 4 : 0;
       this._music();
-      A.display.show({ big: this.tr('frenzy'), small: 'OVER', dur: 1.0, prio: 1 });
+      A.display.show({ big: this.tr('frenzy'), small: this.tr('over'), dur: 1.0, prio: 1 });
     }
     if (this.t > b.tsukimiUntil && b.tsukimiUntil > 0) {
       b.tsukimiUntil = 0; A.world.turntable.target = this.t < b.frenzyUntil ? 7 : 0;
       this._music();
-      A.display.show({ big: this.tr('tsukimi'), small: 'COMPLETE', dur: 1.4, prio: 2 });
+      A.display.show({ big: this.tr('tsukimi'), small: this.tr('complete'), dur: 1.4, prio: 2 });
     }
     if (b.pendingBalls > 0 && !A.world.ballInShooter()) { b.pendingBalls--; this.serveBall(true); }
     // auto-launch balls sitting in the shooter lane during multiball / ball save
@@ -646,17 +659,18 @@ export class Rules {
   }
 }
 
-function loadHighScores() {
+export function loadHighScores(key = 'tsukimi.hiscores', defaults = null) {
   try {
-    const v = JSON.parse(localStorage.getItem('tsukimi.hiscores') || 'null');
+    const v = JSON.parse(localStorage.getItem(key) || 'null');
     // stored data is outside our control: keep only well-formed entries
     const ok = Array.isArray(v) ? v.filter(h => h && typeof h.name === 'string' && Number.isFinite(h.score))
       .map(h => ({ name: h.name.slice(0, 3), score: h.score, date: h.date })).sort((a, b) => b.score - a.score).slice(0, 5) : [];
     if (ok.length) return ok;
   } catch (e) { }
+  if (defaults) return defaults.map(([name, score]) => ({ name, score }));
   return [
     { name: 'KOI', score: 5000000 }, { name: 'MOO', score: 3000000 }, { name: 'SAK', score: 2000000 },
     { name: 'LAN', score: 1000000 }, { name: 'ZEN', score: 500000 },
   ];
 }
-function saveHighScores(h) { try { localStorage.setItem('tsukimi.hiscores', JSON.stringify(h)); } catch (e) { } }
+function saveHighScores(key, h) { try { localStorage.setItem(key, JSON.stringify(h)); } catch (e) { } }

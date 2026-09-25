@@ -14,26 +14,36 @@ export class MusicPlayer {
     this.xfade = 0.045;
     this.timer = setInterval(() => this._tick(), 90);
   }
-  async load() {
+  // songs load on demand (each table brings its own); concurrent requests share one fetch
+  load(ids = Object.keys(CUES.songs)) { return Promise.all(ids.map(id => this.ensure(id))); }
+  ensure(id) {
+    this.loading ||= {};
+    if (this.buffers[id]) return Promise.resolve(this.buffers[id]);
+    if (this.loading[id]) return this.loading[id];
+    const s = CUES.songs[id];
     const ogg = typeof Audio !== 'undefined' && new Audio().canPlayType('audio/ogg; codecs="vorbis"') !== '';
-    await Promise.all(Object.entries(CUES.songs).map(async ([id, s]) => {
-      const tryLoad = async (ext) => {
-        const r = await fetch(BASE + s.file + ext); if (!r.ok) throw new Error('http ' + r.status);
-        return this.ctx.decodeAudioData(await r.arrayBuffer());
-      };
+    const tryLoad = async (ext) => {
+      const r = await fetch(BASE + s.file + ext); if (!r.ok) throw new Error('http ' + r.status);
+      return this.ctx.decodeAudioData(await r.arrayBuffer());
+    };
+    return this.loading[id] = (async () => {
       let buf;
       try { buf = await tryLoad(ogg ? '.ogg' : '.mp3'); } catch (e) { buf = await tryLoad(ogg ? '.mp3' : '.ogg'); }
       this.buffers[id] = buf;
       // decoders that keep MP3 encoder padding add a few ms at the start: shift the grid by that much
       const extra = buf.duration - s.samples / s.rate;
       this.offsetFix[id] = extra > 0 && extra < 0.1 ? extra * 0.5 : 0;
-    }));
+      return buf;
+    })().catch(e => { delete this.loading[id]; throw e; });
   }
-  get ready() { return Object.keys(this.buffers).length === Object.keys(CUES.songs).length; }
 
   play(name) {
     this.want = name;
-    if (!this.ready) return;
+    const cue0 = name && CUES.cues[name];
+    if (cue0 && !this.buffers[cue0.song]) {
+      this.ensure(cue0.song).then(() => { if (this.want === name) this.play(name); }).catch(e => console.warn('music load failed', e));
+      return;
+    }
     if (this.cur && this.cur.name === name) return;
     const now = this.ctx.currentTime;
     if (!name) { this._fadeOutAll(now, 0.9); this.cur = null; return; }

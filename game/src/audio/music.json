@@ -13,6 +13,13 @@
    "rate": 44100,
    "barLen": 2.69724,
    "barPhase": 0.4171
+  },
+  "zen": {
+   "file": "song_zen",
+   "samples": 6299244,
+   "rate": 44100,
+   "barLen": 0.48102,
+   "barPhase": 0.3385
   }
  },
  "cues": {
@@ -49,6 +56,41 @@
    "start": 108.3065,
    "loopStart": 108.3065,
    "loopEnd": 140.6733,
+   "gain": 1.0
+  },
+  "ry_attract": {
+   "song": "zen",
+   "start": 0.0,
+   "loopStart": 38.15,
+   "loopEnd": 135.7486,
+   "gain": 0.85
+  },
+  "ry_main": {
+   "song": "zen",
+   "start": 0.0,
+   "loopStart": 38.15,
+   "loopEnd": 135.7486,
+   "gain": 1.0
+  },
+  "ry_multiball": {
+   "song": "zen",
+   "start": 86.5,
+   "loopStart": 86.5,
+   "loopEnd": 107.0575,
+   "gain": 1.05
+  },
+  "ry_palace": {
+   "song": "zen",
+   "start": 32.15,
+   "loopStart": 32.15,
+   "loopEnd": 73.0556,
+   "gain": 1.0
+  },
+  "ry_whirl": {
+   "song": "zen",
+   "start": 124.5,
+   "loopStart": 124.5,
+   "loopEnd": 136.1497,
    "gain": 1.0
   }
  }

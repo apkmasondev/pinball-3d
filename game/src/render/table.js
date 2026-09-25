@@ -2,13 +2,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { tv, clamp } from './util.js';
-import LAMPS from '../lamps.json';
 import { TABLE_W, TABLE_L } from '../layout.js';
 
-// GI bulb positions on the playfield: x, y, radius (m)
+// GI bulb positions on the playfield (x, y, radius in m) unless the table brings its own
 const GI_SPOTS = [[-0.16, 0.26, 0.10], [0.16, 0.26, 0.10], [-0.17, 0.56, 0.11], [0.15, 0.54, 0.11], [0.0, 0.84, 0.12], [-0.1, 0.72, 0.1], [0.12, 0.72, 0.1], [0.0, 0.38, 0.12]];
-
-const TEX = (p) => `${import.meta.env.BASE_URL}assets/tex/${p}`;
 
 export function loadTexture(loader, url, { srgb = true, nearest = false, aniso = 8, flipY = true } = {}) {
   return new Promise((res, rej) => loader.load(url, (t) => {
@@ -22,9 +19,9 @@ export function loadTexture(loader, url, { srgb = true, nearest = false, aniso =
 
 // Lamp controller: named lamps with incandescent-style smoothing
 export class Lamps {
-  constructor() {
-    this.list = LAMPS;
-    this.byName = new Map(LAMPS.map(l => [l.name, l]));
+  constructor(list) {
+    this.list = list;
+    this.byName = new Map(list.map(l => [l.name, l]));
     this.count = 128;
     this.target = new Float32Array(this.count);
     this.value = new Float32Array(this.count);
@@ -79,7 +76,7 @@ export class Lamps {
   }
 }
 
-function playfieldMaterial(base, emit, lampId, lamps, ao) {
+function playfieldMaterial(base, emit, lampId, lamps, ao, gi, giColor) {
   const m = new THREE.MeshPhysicalMaterial({
     map: base, roughness: 0.4, metalness: 0.0,
     clearcoat: 0.85, clearcoatRoughness: 0.13, envMapIntensity: 0.55,
@@ -91,7 +88,8 @@ function playfieldMaterial(base, emit, lampId, lamps, ao) {
     uLamps: { value: lamps.value }, uLampBoost: { value: 3.0 },
     uAO: { value: ao }, uHasAO: { value: ao ? 1 : 0 },
     // warm "GI" bulbs under the plastics: diffuse only, so they never leave glints in the clearcoat
-    uGI: { value: 1 }, uGISpots: { value: GI_SPOTS.map(s => new THREE.Vector3(...s)) }, uTable: { value: new THREE.Vector2(TABLE_W, TABLE_L) },
+    uGI: { value: 1 }, uGISpots: { value: gi.map(s => new THREE.Vector3(...s)) }, uTable: { value: new THREE.Vector2(TABLE_W, TABLE_L) },
+    uGIColor: { value: new THREE.Color(...giColor) },
   };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, m.userData.uniforms);
@@ -99,7 +97,7 @@ function playfieldMaterial(base, emit, lampId, lamps, ao) {
       .replace('#include <common>', `#include <common>
         uniform sampler2D uLampId; uniform sampler2D uLampEmit; uniform float uLamps[128]; uniform float uLampBoost;
         uniform sampler2D uAO; uniform float uHasAO;
-        uniform float uGI; uniform vec3 uGISpots[${GI_SPOTS.length}]; uniform vec2 uTable;`)
+        uniform float uGI; uniform vec3 uGISpots[${gi.length}]; uniform vec2 uTable; uniform vec3 uGIColor;`)
       .replace('#include <map_fragment>', `#include <map_fragment>
         if (uHasAO > 0.5) { float aoV = texture2D(uAO, vMapUv).r; diffuseColor.rgb *= mix(1.0, aoV, 0.85); }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
@@ -110,10 +108,10 @@ function playfieldMaterial(base, emit, lampId, lamps, ao) {
           vec3 lc = texture2D(uLampEmit, vMapUv).rgb;
           totalEmissiveRadiance += lc * inten * uLampBoost;
           diffuseColor.rgb += lc * inten * 0.3;
-          vec2 tp = vec2((vMapUv.x - 0.5) * uTable.x, vMapUv.y * uTable.y);
+          vec2 tp = vec2((vMapUv.x - 0.5) * uTable.x, (1.0 - vMapUv.y) * uTable.y);
           float g = 0.0;
-          for (int i = 0; i < ${GI_SPOTS.length}; i++) { vec3 s = uGISpots[i]; float d = length(tp - s.xy) / s.z; g += 1.0 / (1.0 + d * d * d); }
-          totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.32) * g * 0.22 * uGI;
+          for (int i = 0; i < ${gi.length}; i++) { vec3 s = uGISpots[i]; float d = length(tp - s.xy) / s.z; g += 1.0 / (1.0 + d * d * d); }
+          totalEmissiveRadiance += diffuseColor.rgb * uGIColor * g * 0.22 * uGI;
         }`)
       // the key/moon lights mirrored in the lacquer: keep them a soft sheen instead of a blooming hot spot
       .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
@@ -128,28 +126,31 @@ function playfieldMaterial(base, emit, lampId, lamps, ao) {
 }
 
 export class TableView {
-  constructor(layout, world) {
-    this.L = layout; this.w = world;
+  // def: the table's description from tables.js (lamps, model, texture folder, GI, lights)
+  constructor(layout, world, def) {
+    this.L = layout; this.w = world; this.def = def;
     this.root = new THREE.Group();
     this.root.name = 'tableRoot';
-    this.lamps = new Lamps();
+    this.lamps = new Lamps(def.lamps);
     this.dyn = {};
   }
 
   async build(renderer, onProgress) {
     const loader = new THREE.TextureLoader();
     const aniso = renderer.capabilities.getMaxAnisotropy();
-    const gltfP = new Promise((res, rej) => new GLTFLoader().load(`${import.meta.env.BASE_URL}assets/models/table.glb`, res,
+    const TEX = (p) => `${import.meta.env.BASE_URL}${this.def.tex}${p}`;
+    const gltfP = new Promise((res, rej) => new GLTFLoader().load(`${import.meta.env.BASE_URL}${this.def.model}`, res,
       (e) => { if (onProgress && e.total) onProgress(e.loaded / e.total); }, rej));
+    // the playfield's UVs follow glTF (v = 0 at the back of the table): its images are not flipped
     const [base, emit, lampId, ao, gltf] = await Promise.all([
-      loadTexture(loader, TEX('playfield_base.jpg'), { aniso }),
-      loadTexture(loader, TEX('playfield_emit.jpg'), { aniso }),
-      loadTexture(loader, TEX('playfield_lampid.png'), { srgb: false, nearest: true, aniso: 1 }),
-      loadTexture(loader, TEX('playfield_ao.jpg'), { srgb: false, aniso: 4 }).catch(() => null),
+      loadTexture(loader, TEX('playfield_base.jpg'), { aniso, flipY: false }),
+      loadTexture(loader, TEX('playfield_emit.jpg'), { aniso, flipY: false }),
+      loadTexture(loader, TEX('playfield_lampid.png'), { srgb: false, nearest: true, aniso: 1, flipY: false }),
+      loadTexture(loader, TEX('playfield_ao.jpg'), { srgb: false, aniso: 4, flipY: false }).catch(() => null),
       gltfP,
     ]);
     this.textures = { base, emit, lampId, ao };
-    this.pfMat = playfieldMaterial(base, emit, lampId, this.lamps, ao);
+    this.pfMat = playfieldMaterial(base, emit, lampId, this.lamps, ao, this.def.gi || GI_SPOTS, this.def.giColor || [1.0, 0.62, 0.32]);
     this._processGLB(gltf.scene);
     this._lights();
     return this;
@@ -161,6 +162,9 @@ export class TableView {
     d.flippers = this.L.flippers.map(f => find(f.id + '_pivot'));
     d.bumpers = this.L.bumpers.map((b, i) => ({ g: find('bumper' + i), ring: find(`bumper${i}_ring`), lip: find(`bumper${i}_ringlip`), cap: find(`bumper${i}_cap`), lit: 0.3 }));
     d.drops = this.L.drops.map(dd => find(dd.id));
+    d.standups = (this.L.standups || []).map(t => find(t.id));
+    d.pearl = find('dragon_pearl');
+    if (d.pearl) d.pearl.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.emissive = new THREE.Color(0.75, 1.0, 0.95); d.pearlMat = o.material; } });
     d.gates = this.L.gates.map(g => find(g.id + '_flap'));
     d.spinner = find('spinner_flap');
     d.plunger = find('plunger');
@@ -181,7 +185,7 @@ export class TableView {
       return { g, mat, light, level: 0 };
     });
     for (const o of [...d.gates, d.spinner]) if (o) o.userData.q0 = o.quaternion.clone();
-    for (const o of [d.plunger, d.kickback, ...d.drops, ...d.slings]) if (o) o.userData.p0 = o.position.clone();
+    for (const o of [d.plunger, d.kickback, ...d.drops, ...d.slings, ...d.standups]) if (o) o.userData.p0 = o.position.clone();
     for (const b of d.bumpers) {
       if (b.ring) b.ring.userData.p0 = b.ring.position.clone();
       if (b.lip) b.lip.userData.p0 = b.lip.position.clone();
@@ -200,7 +204,7 @@ export class TableView {
     }
     const dynSet = new Set();
     const markDyn = (o) => o && o.traverse(c => dynSet.add(c));
-    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.backglass, d.apron].forEach(markDyn);
+    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.standups, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.backglass, d.apron, d.pearl].forEach(markDyn);
 
     // ---- material fix-ups by name
     const fix = (m) => {
@@ -216,6 +220,8 @@ export class TableView {
       if (n.startsWith('acrylic')) { m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.roughness = 0.05; m.envMapIntensity = 1.2; }
       if (['gold', 'chrome', 'gold_dark', 'steel'].includes(n)) m.envMapIntensity = 1.0;
       if (n === 'wire') m.envMapIntensity = 0.75;
+      if (n === 'pearl') { m.envMapIntensity = 1.3; }
+      if (n.startsWith('targetface_')) { m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; m.emissiveIntensity = 0.12; }
       if (n.startsWith('lacquer')) m.envMapIntensity = 0.8;
       if (n === 'innerwall_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; }
       // painted back panel: a touch of self-light so the moon halo reads behind the medallion
@@ -275,7 +281,8 @@ export class TableView {
   _lights() {
     const L = this.L;
     // behind and above the player: its clearcoat glint then falls off the table for every camera
-    const key = new THREE.SpotLight(0xe4ebff, 5.2, 4, Math.PI / 4.4, 0.7, 1.3);
+    const LT = this.def.lights || {};
+    const key = new THREE.SpotLight(LT.key ?? 0xe4ebff, LT.keyIntensity ?? 5.2, 4, Math.PI / 4.4, 0.7, 1.3);
     key.position.copy(tv(0.03, -0.30, 1.2));
     key.target.position.copy(tv(0, L.TABLE_L * 0.52, 0));
     key.castShadow = true;
@@ -284,7 +291,7 @@ export class TableView {
     key.shadow.bias = -0.00008; key.shadow.normalBias = 0.0015; key.shadow.radius = 4;
     this.root.add(key, key.target);
     this.keyLight = key;
-    this.hemi = new THREE.HemisphereLight(0x6a78c0, 0x3a1a10, 0.46);
+    this.hemi = new THREE.HemisphereLight(LT.sky ?? 0x6a78c0, LT.ground ?? 0x3a1a10, 0.46);
     this.root.add(this.hemi);
     this.gi = [];
     // a small warm lamp over the plunger lane, like the one under a real shooter-lane plastic
@@ -292,7 +299,7 @@ export class TableView {
     pl.position.copy(tv(L.plunger.x - 0.02, 0.06, 0.04));
     this.root.add(pl); this.plungerLight = pl;
     // (placed nearly overhead so its clearcoat glint lands off the playfield from the player's view)
-    const moon = new THREE.DirectionalLight(0x9fb4ff, 0.45);
+    const moon = new THREE.DirectionalLight(LT.moon ?? 0x9fb4ff, LT.moonIntensity ?? 0.45);
     moon.position.copy(tv(-0.12, 0.62, 1.5)); moon.target.position.copy(tv(0, 0.32, 0));
     this.root.add(moon, moon.target);
     this.moonLight = moon;
@@ -376,6 +383,34 @@ export class TableView {
       f.light.intensity = v * 0.35;
     }
     if (d.kickback) d.kickback.position.z = d.kickback.userData.p0.z - w.kickback.anim * 0.012;
+    // stand-ups rock back along their face normal when struck (table x,y -> three x,-z)
+    d.standups.forEach((o, i) => {
+      if (!o) return;
+      const t = w.standups[i], k = t.anim * t.anim * 0.004;
+      o.position.set(o.userData.p0.x - t.n[0] * k, o.userData.p0.y, o.userData.p0.z + t.n[1] * k);
+    });
+    if (d.pearlMat) {
+      const l = this.lamps.byName.get('pearl');
+      const v = l ? this.lamps.value[l.id] : 0;
+      d.pearlMat.emissiveIntensity = 0.12 + v * 0.9 + 0.05 * Math.sin(this.lamps.t * 1.7);
+    }
+  }
+
+  // frees everything this table uploaded to the GPU (switching tables)
+  dispose() {
+    const seen = new Set();
+    const free = (x) => { if (x && !seen.has(x)) { seen.add(x); x.dispose(); } };
+    this.root.traverse(o => {
+      if (o.geometry) free(o.geometry);
+      const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+      for (const m of ms) {
+        for (const k in m) if (m[k] && m[k].isTexture) free(m[k]);
+        free(m);
+      }
+      if (o.isLight && o.shadow && o.shadow.map) o.shadow.map.dispose();
+    });
+    for (const t of Object.values(this.textures || {})) free(t);
+    this.root.removeFromParent();
   }
 }
 

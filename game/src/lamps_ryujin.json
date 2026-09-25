@@ -1,0 +1,587 @@
+[
+{
+"id": 1,
+"name": "laneR",
+"group": "rule",
+"u": 285,
+"v": 268,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 2,
+"name": "laneY",
+"group": "rule",
+"u": 359,
+"v": 268,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 3,
+"name": "laneU",
+"group": "rule",
+"u": 433,
+"v": 268,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 4,
+"name": "orbitTopL",
+"group": "rule",
+"u": 100,
+"v": 196,
+"r": 13,
+"color": "#50ebe1"
+},
+{
+"id": 5,
+"name": "orbitTopR",
+"group": "rule",
+"u": 986,
+"v": 196,
+"r": 13,
+"color": "#50ebe1"
+},
+{
+"id": 6,
+"name": "skill1",
+"group": "rule",
+"u": 1021,
+"v": 470,
+"r": 13,
+"color": "#ffb046"
+},
+{
+"id": 7,
+"name": "skill2",
+"group": "rule",
+"u": 1021,
+"v": 515,
+"r": 13,
+"color": "#ffb046"
+},
+{
+"id": 8,
+"name": "spinL1",
+"group": "rule",
+"u": 82,
+"v": 470,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 9,
+"name": "spinL2",
+"group": "rule",
+"u": 86,
+"v": 615,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 10,
+"name": "pearl",
+"group": "moon",
+"u": 548,
+"v": 96,
+"r": 62,
+"color": "#e1fffa"
+},
+{
+"id": 11,
+"name": "palaceRing",
+"group": "rule",
+"u": 543,
+"v": 372,
+"r": 60,
+"color": "#50ebe1"
+},
+{
+"id": 12,
+"name": "superJp",
+"group": "rule",
+"u": 543,
+"v": 484,
+"r": 12,
+"color": "#ffd778"
+},
+{
+"id": 13,
+"name": "path1",
+"group": "rule",
+"u": 543,
+"v": 628,
+"r": 19,
+"color": "#f0f0ff"
+},
+{
+"id": 14,
+"name": "path2",
+"group": "rule",
+"u": 543,
+"v": 580,
+"r": 19,
+"color": "#f0f0ff"
+},
+{
+"id": 15,
+"name": "path3",
+"group": "rule",
+"u": 543,
+"v": 532,
+"r": 19,
+"color": "#f0f0ff"
+},
+{
+"id": 16,
+"name": "lock1",
+"group": "rule",
+"u": 486,
+"v": 522,
+"r": 13,
+"color": "#ff463c"
+},
+{
+"id": 17,
+"name": "lock2",
+"group": "rule",
+"u": 600,
+"v": 522,
+"r": 13,
+"color": "#ff463c"
+},
+{
+"id": 18,
+"name": "orbitL1",
+"group": "rule",
+"u": 232,
+"v": 808,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 19,
+"name": "orbitL2",
+"group": "rule",
+"u": 202,
+"v": 748,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 20,
+"name": "orbitLjp",
+"group": "rule",
+"u": 268,
+"v": 864,
+"r": 11,
+"color": "#ffd778"
+},
+{
+"id": 21,
+"name": "orbitR1",
+"group": "rule",
+"u": 806,
+"v": 790,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 22,
+"name": "orbitR2",
+"group": "rule",
+"u": 842,
+"v": 735,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 23,
+"name": "orbitRjp",
+"group": "rule",
+"u": 790,
+"v": 858,
+"r": 11,
+"color": "#ffd778"
+},
+{
+"id": 24,
+"name": "rampArrow",
+"group": "rule",
+"u": 706,
+"v": 872,
+"r": 26,
+"color": "#5ae696"
+},
+{
+"id": 25,
+"name": "rampJp",
+"group": "rule",
+"u": 706,
+"v": 928,
+"r": 12,
+"color": "#ffd778"
+},
+{
+"id": 26,
+"name": "shell0",
+"group": "rule",
+"u": 344,
+"v": 869,
+"r": 12,
+"color": "#f0f0ff"
+},
+{
+"id": 27,
+"name": "shell1",
+"group": "rule",
+"u": 386,
+"v": 851,
+"r": 12,
+"color": "#f0f0ff"
+},
+{
+"id": 28,
+"name": "shell2",
+"group": "rule",
+"u": 428,
+"v": 833,
+"r": 12,
+"color": "#f0f0ff"
+},
+{
+"id": 29,
+"name": "whirlLit",
+"group": "rule",
+"u": 402,
+"v": 890,
+"r": 17,
+"color": "#50ebe1"
+},
+{
+"id": 30,
+"name": "tide0",
+"group": "rule",
+"u": 910,
+"v": 935,
+"r": 13,
+"color": "#50ebe1"
+},
+{
+"id": 31,
+"name": "tide1",
+"group": "rule",
+"u": 910,
+"v": 1005,
+"r": 13,
+"color": "#50ebe1"
+},
+{
+"id": 32,
+"name": "whirlRing",
+"group": "rule",
+"u": 543,
+"v": 990,
+"r": 92,
+"color": "#50ebe1"
+},
+{
+"id": 33,
+"name": "pearl0",
+"group": "rule",
+"u": 543,
+"v": 882,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 34,
+"name": "pearl1",
+"group": "rule",
+"u": 619,
+"v": 914,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 35,
+"name": "pearl2",
+"group": "rule",
+"u": 651,
+"v": 990,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 36,
+"name": "pearl3",
+"group": "rule",
+"u": 619,
+"v": 1066,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 37,
+"name": "pearl4",
+"group": "rule",
+"u": 543,
+"v": 1098,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 38,
+"name": "pearl5",
+"group": "rule",
+"u": 467,
+"v": 1066,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 39,
+"name": "pearl6",
+"group": "rule",
+"u": 435,
+"v": 990,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 40,
+"name": "pearl7",
+"group": "rule",
+"u": 467,
+"v": 914,
+"r": 11,
+"color": "#f0f0ff"
+},
+{
+"id": 41,
+"name": "bonus2",
+"group": "rule",
+"u": 446,
+"v": 1115,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 42,
+"name": "bonus3",
+"group": "rule",
+"u": 505,
+"v": 1143,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 43,
+"name": "bonus4",
+"group": "rule",
+"u": 581,
+"v": 1143,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 44,
+"name": "bonus5",
+"group": "rule",
+"u": 640,
+"v": 1115,
+"r": 15,
+"color": "#ffb046"
+},
+{
+"id": 45,
+"name": "saucerRing",
+"group": "rule",
+"u": 145,
+"v": 870,
+"r": 50,
+"color": "#ffb046"
+},
+{
+"id": 46,
+"name": "mystery",
+"group": "rule",
+"u": 150,
+"v": 1004,
+"r": 14,
+"color": "#ffd778"
+},
+{
+"id": 47,
+"name": "multiLit",
+"group": "rule",
+"u": 543,
+"v": 1232,
+"r": 15,
+"color": "#5ae696"
+},
+{
+"id": 48,
+"name": "extraBall",
+"group": "rule",
+"u": 543,
+"v": 1296,
+"r": 18,
+"color": "#ff463c"
+},
+{
+"id": 49,
+"name": "ballSave",
+"group": "rule",
+"u": 543,
+"v": 1512,
+"r": 11,
+"color": "#ffb046"
+},
+{
+"id": 50,
+"name": "shootAgain",
+"group": "rule",
+"u": 543,
+"v": 1600,
+"r": 38,
+"color": "#ff463c"
+},
+{
+"id": 51,
+"name": "kickback",
+"group": "rule",
+"u": 160,
+"v": 1452,
+"r": 14,
+"color": "#ff463c"
+},
+{
+"id": 52,
+"name": "outL",
+"group": "rule",
+"u": 160,
+"v": 1392,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 53,
+"name": "inL",
+"group": "rule",
+"u": 242,
+"v": 1402,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 54,
+"name": "inR",
+"group": "rule",
+"u": 844,
+"v": 1402,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 55,
+"name": "outR",
+"group": "rule",
+"u": 925,
+"v": 1392,
+"r": 12,
+"color": "#50ebe1"
+},
+{
+"id": 56,
+"name": "launch1",
+"group": "rule",
+"u": 1006,
+"v": 1060,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 57,
+"name": "launch2",
+"group": "rule",
+"u": 1006,
+"v": 960,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 58,
+"name": "launch3",
+"group": "rule",
+"u": 1006,
+"v": 860,
+"r": 22,
+"color": "#ffb046"
+},
+{
+"id": 59,
+"name": "plungerLamp",
+"group": "rule",
+"u": 1006,
+"v": 1540,
+"r": 13,
+"color": "#ffb046"
+},
+{
+"id": 60,
+"name": "lantern0",
+"group": "lantern",
+"u": 182,
+"v": 337,
+"r": 16,
+"color": "#ffbe64"
+},
+{
+"id": 61,
+"name": "lantern1",
+"group": "lantern",
+"u": 262,
+"v": 1176,
+"r": 14,
+"color": "#ffbe64"
+},
+{
+"id": 62,
+"name": "lantern2",
+"group": "lantern",
+"u": 824,
+"v": 1176,
+"r": 14,
+"color": "#ffbe64"
+},
+{
+"id": 63,
+"name": "lantern3",
+"group": "lantern",
+"u": 455,
+"v": 165,
+"r": 12,
+"color": "#ffbe64"
+},
+{
+"id": 64,
+"name": "lantern4",
+"group": "lantern",
+"u": 640,
+"v": 165,
+"r": 12,
+"color": "#ffbe64"
+},
+{
+"id": 65,
+"name": "lantern5",
+"group": "lantern",
+"u": 880,
+"v": 541,
+"r": 14,
+"color": "#ffbe64"
+}
+]

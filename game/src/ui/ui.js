@@ -7,9 +7,10 @@ const STR = {
     auto: 'Auto', low: 'Niska', medium: 'Średnia', high: 'Wysoka', camPlayer: 'Gracz', camHigh: 'Z góry', camFollow: 'Śledząca', camLow: 'Automat',
     controls: 'Sterowanie', rules: 'Zasady', highScores: 'Najlepsze wyniki', enterInitials: 'Nowy rekord! Wpisz inicjały', ok: 'Zapisz',
     gameOver: 'Koniec gry', finalScore: 'Wynik', tapToStart: 'Dotknij, aby zagrać', launch: 'Start',
+    tables: 'Wybierz stół', chooseTable: 'Wybierz stół', current: 'Wybrany', record: 'Rekord', playThis: 'Zagraj', browse: '← → zmiana stołu',
     ctl: [
       ['Lewy flipper', 'Lewy Shift · Z · ←'], ['Prawy flipper', 'Prawy Shift · / · →'], ['Wyrzutnia (przytrzymaj)', 'Spacja · Enter · ↓'],
-      ['Szturchnięcie', 'X · . · ↑'], ['Kamera', 'C'], ['Pauza', 'Esc · P'], ['Wycisz', 'M'],
+      ['Szturchnięcie', 'X · . · ↑'], ['Kamera', 'C'], ['Pauza', 'Esc · P'], ['Wycisz', 'M'], ['Zmiana stołu (menu)', '← · →'],
     ],
     rulesList: [
       ['TSU · KI · MI', 'Przejedź przez trzy górne tory, by zwiększyć mnożnik bonusu i zapalić LOCK. Flipperami przesuwasz zapalone tory.'],
@@ -28,9 +29,10 @@ const STR = {
     auto: 'Auto', low: 'Low', medium: 'Medium', high: 'High', camPlayer: 'Player', camHigh: 'Overhead', camFollow: 'Follow', camLow: 'Cabinet',
     controls: 'Controls', rules: 'Rules', highScores: 'High scores', enterInitials: 'New high score! Enter your initials', ok: 'Save',
     gameOver: 'Game over', finalScore: 'Score', tapToStart: 'Tap to play', launch: 'Launch',
+    tables: 'Choose table', chooseTable: 'Choose a table', current: 'Selected', record: 'Best', playThis: 'Play', browse: '← → change table',
     ctl: [
       ['Left flipper', 'Left Shift · Z · ←'], ['Right flipper', 'Right Shift · / · →'], ['Plunger (hold)', 'Space · Enter · ↓'],
-      ['Nudge', 'X · . · ↑'], ['Camera', 'C'], ['Pause', 'Esc · P'], ['Mute', 'M'],
+      ['Nudge', 'X · . · ↑'], ['Camera', 'C'], ['Pause', 'Esc · P'], ['Mute', 'M'], ['Change table (menu)', '← · →'],
     ],
     rulesList: [
       ['TSU · KI · MI', 'Roll through the three top lanes to raise the bonus multiplier and light LOCK. The flippers rotate the lit lanes.'],
@@ -55,26 +57,40 @@ export class UI {
     root.innerHTML = `
       <div id="loading" class="screen show">
         <div class="moon-loader"><div class="moon-disc"></div></div>
-        <div class="kanji small">月見</div>
+        <div class="kanji small" id="loadKanji">月見</div>
         <div class="loadbar"><div id="loadfill"></div></div>
         <div id="loadtext" class="caption"></div>
       </div>
       <canvas id="petals"></canvas>
       <div id="hud"><div class="dmd-frame"><div class="dmd-corner l"></div><div class="dmd-corner r"></div><canvas id="dmd"></canvas></div></div>
       <div id="title" class="screen">
-        <div class="title-block">
-          <div class="kanji">月見</div>
-          <div class="latin">TSUKIMI</div>
-          <div class="sub" data-s="subtitle"></div>
+        <div class="title-row">
+          <button class="chev l" data-a="prevTable" aria-label="prev"><span></span></button>
+          <div class="title-block">
+            <div class="kanji" id="tKanji">月見</div>
+            <div class="latin" id="tLatin">TSUKIMI</div>
+            <div class="sub" id="tSub"></div>
+          </div>
+          <button class="chev r" data-a="nextTable" aria-label="next"><span></span></button>
         </div>
         <nav class="menu" id="titleMenu">
           <button data-a="play" data-s="play"></button>
+          <button data-a="tables" data-s="tables"></button>
           <button data-a="help" data-s="help"></button>
           <button data-a="scores" data-s="scores"></button>
           <button data-a="settings" data-s="settings"></button>
         </nav>
         <div class="hint" data-s="${this.touch ? 'tapToStart' : 'pressStart'}"></div>
+        <div class="dots" id="tableDots"></div>
       </div>
+      <div id="tablesScr" class="screen panel-screen">
+        <div class="tables-wrap">
+          <h2 data-s="chooseTable"></h2>
+          <div class="table-cards" id="tableCards"></div>
+          <nav class="menu row"><button data-a="back" data-s="back"></button></nav>
+        </div>
+      </div>
+      <div id="veil"><div class="veil-in"><div class="kanji small" id="veilKanji"></div><div class="loadbar"><div id="veilFill"></div></div><div class="caption" id="veilText"></div></div></div>
       <div id="pause" class="screen panel-screen">
         <div class="panel narrow">
           <h2 data-s="paused"></h2>
@@ -108,7 +124,7 @@ export class UI {
       this.h.sound && this.h.sound('uiSelect');
       this.action(b.dataset.a);
     });
-    root.addEventListener('mouseover', (e) => { if (e.target.closest('button[data-a]')) this.h.sound && this.h.sound('uiMove'); });
+    root.addEventListener('mouseover', (e) => { const b = e.target.closest('button[data-a]'); if (b && b !== this._hovered) this.h.sound && this.h.sound('uiMove'); this._hovered = b; });
     // initials by pointer / touch: the arrows change a letter, tapping a letter selects it
     this.$('#letters').addEventListener('click', (e) => {
       const el = e.target.closest('[data-i]'); if (!el) return;
@@ -116,8 +132,19 @@ export class UI {
       if (el.dataset.d) this.initialsCycle(+el.dataset.d); else this._renderInitials();
       this.h.sound && this.h.sound('uiMove');
     });
+    // a horizontal swipe on the title browses the tables
+    {
+      let sx = null, sy = 0;
+      const t = this.$('#title');
+      t.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; });
+      t.addEventListener('pointerup', (e) => {
+        if (sx === null) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && this.screen === 'title') { this._swiped = performance.now(); this.h.cycleTable(dx < 0 ? 1 : -1); }
+      });
+    }
     // touch screens: a tap anywhere on the title outside the menu starts a game (as the hint says)
-    this.$('#title').addEventListener('click', (e) => { if (this.touch && this.screen === 'title' && performance.now() - this.shownAt > 1200 && !e.target.closest('nav')) this.h.start(); });
+    this.$('#title').addEventListener('click', (e) => { if (this.touch && this.screen === 'title' && performance.now() - this.shownAt > 1200 && performance.now() - (this._swiped || 0) > 600 && !e.target.closest('nav, .chev')) this.h.start(); });
     this._touch();
     this._petals();
     this.initials = { letters: ['K', 'O', 'I'], pos: 0 };
@@ -135,13 +162,13 @@ export class UI {
     this.prev = this.screen;
     this.screen = name; this.shownAt = performance.now();
     this.root.querySelectorAll('.screen').forEach(el => el.classList.remove('show'));
-    const map = { title: '#title', pause: '#pause', settings: '#settings', help: '#helpScr', scores: '#scoresScr', initials: '#initials', loading: '#loading' };
+    const map = { title: '#title', pause: '#pause', settings: '#settings', help: '#helpScr', scores: '#scoresScr', initials: '#initials', loading: '#loading', tables: '#tablesScr' };
     if (map[name]) this.$(map[name]).classList.add('show');
     this.$('#petals').classList.toggle('show', name === 'title');
     this.root.classList.toggle('in-game', name === 'game');
     this.root.classList.toggle('menu-open', name !== 'game');
     if (name === 'initials') this._renderInitials();
-    const first = this.$(map[name] + ' button');
+    const first = name === 'tables' ? this.$('.tcard.current') || this.$('.tcard') : name === 'title' ? this.$('#titleMenu button') : this.$(map[name] + ' button');
     if (first && !this.touch) first.focus({ preventScroll: true });
   }
 
@@ -154,6 +181,9 @@ export class UI {
       case 'settings': this.returnTo = this.screen; this.show('settings'); break;
       case 'help': this.returnTo = this.screen; this.show('help'); break;
       case 'scores': this._buildScores(); this.returnTo = this.screen; this.show('scores'); break;
+      case 'tables': this._buildTables(); this.returnTo = 'title'; this.show('tables'); break;
+      case 'prevTable': this.h.cycleTable(-1); break;
+      case 'nextTable': this.h.cycleTable(1); break;
       case 'back': back(); break;
       case 'saveInitials': this.h.initials(this.initials.letters.join('')); break;
     }
@@ -161,8 +191,66 @@ export class UI {
 
   setLoading(p, text) {
     this.$('#loadfill').style.width = `${Math.round(p * 100)}%`;
-    this.$('#loadtext').textContent = text || this.t('loading');
+    this.$('#loadtext').textContent = text || (this.table ? this.table.loading[this.s.lang] || this.table.loading.en : this.t('loading'));
   }
+
+  // ---------------------------------------------------------------- tables
+  setTable(def) {
+    this.table = def;
+    document.documentElement.dataset.table = def.ui;
+    this.$('#tKanji').textContent = def.kanji;
+    this.$('#tLatin').textContent = def.name;
+    this.$('#tSub').textContent = def.subtitle[this.s.lang] || def.subtitle.en;
+    this.$('#loadKanji').textContent = def.kanji;
+    this._buildHelp();
+    const list = this.h.tables ? this.h.tables() : [];
+    this.$('#tableDots').innerHTML = list.map(t => `<span class="${t.def.id === def.id ? 'on' : ''}"></span>`).join('');
+    // the new logo rises in
+    const tb = this.$('#title .title-block'); tb.classList.remove('enter'); void tb.offsetWidth; tb.classList.add('enter');
+  }
+  veil(on, text, kanji) {
+    const v = this.$('#veil');
+    if (on) {
+      this.$('#veilText').textContent = text || '';
+      this.$('#veilKanji').textContent = kanji || '';
+      this.$('#veilFill').style.width = '0%';
+    }
+    v.classList.toggle('show', on);
+  }
+  veilProgress(p) { this.$('#veilFill').style.width = `${Math.round(p * 100)}%`; }
+  _buildTables() {
+    const lang = this.s.lang;
+    const list = this.h.tables ? this.h.tables() : [];
+    this.$('#tableCards').innerHTML = list.map(({ def: d, best, current }) => `
+      <button class="tcard${current ? ' current' : ''}" data-table="${d.id}" data-theme="${d.ui}">
+        <div class="tc-img" style="background-image:url('${import.meta.env.BASE_URL}${d.preview}')"><div class="tc-kanji">${d.kanji}</div></div>
+        <div class="tc-body">
+          <div class="tc-name">${esc(d.name)}</div>
+          <div class="tc-sub">${esc(d.subtitle[lang] || d.subtitle.en)}</div>
+          <p class="tc-blurb">${esc(d.blurb[lang] || d.blurb.en)}</p>
+          <ul class="tc-feat">${(d.features[lang] || d.features.en).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+          <div class="tc-best"><span>${this.t('record')}</span> ${best ? `${esc(best.name)} · ${best.score.toLocaleString('en-US')}` : '—'}</div>
+        </div>
+        ${current ? `<div class="tc-flag">${this.t('current')}</div>` : ''}
+      </button>`).join('');
+    this.$('#tableCards').querySelectorAll('.tcard').forEach(b => {
+      b.addEventListener('click', () => { this.h.sound && this.h.sound('uiSelect'); this.h.selectTable(b.dataset.table); });
+      b.addEventListener('mouseenter', () => { this.h.sound && this.h.sound('uiMove'); if (!this.touch) b.focus({ preventScroll: true }); });
+    });
+  }
+  tablesMove(dir) {
+    const cards = [...this.root.querySelectorAll('.tcard')]; if (!cards.length) return;
+    const i = cards.indexOf(document.activeElement);
+    const n = cards[(Math.max(0, i) + dir + cards.length) % cards.length];
+    n.focus({ preventScroll: true }); n.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    this.h.sound && this.h.sound('uiMove');
+  }
+  tablesConfirm() {
+    const f = document.activeElement;
+    if (f && f.classList && f.classList.contains('tcard')) { this.h.sound && this.h.sound('uiSelect'); this.h.selectTable(f.dataset.table); }
+    else if (f && f.dataset && f.dataset.a) this.action(f.dataset.a);
+  }
+
 
   flash(strength, color = '#ffd8a0') {
     const f = this.$('#flash');
@@ -197,8 +285,8 @@ export class UI {
     this.$('#helpBody').innerHTML = `
       <div class="cols">
         <section><h2>${this.t('controls')}</h2><table class="keys">${L.ctl.map(([a, k]) => `<tr><td>${a}</td><td><kbd>${k}</kbd></td></tr>`).join('')}</table>
-        ${this.touch ? `<p class="note">${this.s.lang === 'pl' ? 'Na ekranie dotykowym: lewa i prawa połowa ekranu to flippery, przycisk Start wyrzuca kulkę.' : 'On touch screens: the left and right halves are the flippers; the Launch button fires the plunger.'}</p>` : ''}</section>
-        <section><h2>${this.t('rules')}</h2><dl class="rules">${L.rulesList.map(([h, d]) => `<dt>${h}</dt><dd>${d}</dd>`).join('')}</dl></section>
+        ${this.touch ? `<p class="note">${this.s.lang === 'pl' ? 'Na ekranie dotykowym: lewa i prawa połowa ekranu to flippery, przycisk Start wyrzuca kulkę. Stół zmienisz, przesuwając palcem po ekranie tytułowym.' : 'On touch screens: the left and right halves are the flippers; the Launch button fires the plunger. Swipe across the title screen to change the table.'}</p>` : ''}</section>
+        <section><h2>${this.t('rules')}</h2><dl class="rules">${((this.table && this.table.rules && (this.table.rules[this.s.lang] || this.table.rules.en)) || L.rulesList).map(([h, d]) => `<dt>${h}</dt><dd>${d}</dd>`).join('')}</dl></section>
       </div>`;
   }
   _buildScores() {
@@ -266,6 +354,18 @@ export class UI {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       if (c.width !== innerWidth || c.height !== innerHeight) { c.width = innerWidth; c.height = innerHeight; }
       g.clearRect(0, 0, c.width, c.height);
+      // Ryujin: bubbles rise instead of sakura falling
+      if (document.documentElement.dataset.table === 'ryujin') {
+        for (const p of P) {
+          p.t += dt; p.x += Math.sin(p.t * p.w * 1.3) * 18 * dt; p.y -= (p.vy * 1.1 + 14) * dt;
+          if (p.y < -30) { Object.assign(p, this._newPetal(false)); p.y = c.height + 20; }
+          const r = p.s * 0.8;
+          g.strokeStyle = `rgba(190,245,235,${p.a * 0.8})`; g.lineWidth = 1.2;
+          g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.stroke();
+          g.fillStyle = `rgba(230,255,250,${p.a * 0.7})`; g.beginPath(); g.arc(p.x - r * 0.35, p.y - r * 0.35, r * 0.25, 0, Math.PI * 2); g.fill();
+        }
+        return;
+      }
       for (const p of P) {
         p.t += dt; p.x += (p.vx + Math.sin(p.t * p.w) * 22) * dt; p.y += p.vy * dt; p.r += p.vr * dt;
         if (p.y > c.height + 20 || p.x < -40 || p.x > c.width + 40) Object.assign(p, this._newPetal(false));

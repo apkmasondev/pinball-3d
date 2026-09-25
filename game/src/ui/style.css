@@ -147,3 +147,74 @@ kbd { font-family: var(--display); font-size: 12px; letter-spacing: .06em; color
   #settingsBody .row { grid-template-columns: 1fr; gap: 6px; }
   .panel { padding: 24px 20px; }
 }
+
+/* ---------------------------------------------------------------- tables: themes */
+html[data-table="ryujin"] {
+  --crimson: #127a72;
+  --crimson-hi: #3fd6c6;
+  --sakura: #9ff0e4;
+  --moon: #e9fffb;
+}
+html[data-table="ryujin"] #loading { background: radial-gradient(ellipse at 50% 40%, #0c2a44 0%, #03070f 70%); }
+html[data-table="ryujin"] .moon-disc { background: radial-gradient(circle at 38% 34%, #ffffff, #dff4f0 45%, #9fc9c6 100%); box-shadow: 0 0 60px 18px rgba(150, 240, 225, .32), 0 0 140px 50px rgba(80, 200, 200, .12); }
+html[data-table="ryujin"] .menu button:hover, html[data-table="ryujin"] .menu button:focus-visible { background: linear-gradient(180deg, rgba(16, 70, 76, .92), rgba(8, 22, 34, .94)); box-shadow: 0 0 24px rgba(63, 214, 198, .25), inset 0 1px 0 rgba(200, 255, 245, .15); }
+html[data-table="ryujin"] .menu button, html[data-table="ryujin"] .seg button { background: linear-gradient(180deg, rgba(14, 34, 52, .84), rgba(6, 12, 22, .9)); }
+html[data-table="ryujin"] .seg button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); }
+html[data-table="ryujin"] .panel { background: linear-gradient(180deg, rgba(10, 26, 40, .96), rgba(5, 10, 18, .97)); }
+html[data-table="ryujin"] .dmd-frame { background: linear-gradient(180deg, #0d1c26, #050b10); }
+html[data-table="ryujin"] .tbtn { background: rgba(6, 20, 28, .55); }
+html[data-table="ryujin"] .tbtn.down { background: rgba(18, 122, 114, .6); }
+
+/* ---------------------------------------------------------------- title: logo with table arrows */
+.title-row { display: flex; align-items: center; gap: clamp(8px, 3vw, 40px); }
+.title-block.enter { animation: logoIn .9s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes logoIn { from { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.chev { width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(228, 183, 100, .35); background: rgba(8, 6, 10, .45); cursor: pointer; position: relative; outline: none; transition: all .2s; flex: none; }
+.chev span { position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; border-top: 2px solid var(--gold-hi); border-left: 2px solid var(--gold-hi); }
+.chev.l span { transform: translate(-30%, -50%) rotate(-45deg); }
+.chev.r span { transform: translate(-70%, -50%) rotate(135deg); }
+.chev:hover, .chev:focus-visible { border-color: var(--gold); background: rgba(40, 20, 20, .6); box-shadow: 0 0 22px rgba(255, 190, 110, .25); }
+html[data-table="ryujin"] .chev:hover, html[data-table="ryujin"] .chev:focus-visible { background: rgba(10, 50, 56, .6); box-shadow: 0 0 22px rgba(63, 214, 198, .3); }
+.dots { position: absolute; bottom: calc(4.5vh + 34px); display: flex; gap: 12px; }
+.dots span { width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid var(--gold); opacity: .8; background: rgba(0, 0, 0, .4); }
+.dots span.on { background: var(--gold-hi); opacity: 1; box-shadow: 0 0 10px rgba(255, 220, 150, .6); }
+
+/* ---------------------------------------------------------------- table select */
+#ui #tablesScr { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+.tables-wrap { width: min(1080px, 94vw); padding: max(3vh, env(safe-area-inset-top)) 0 4vh; margin: auto 0; }
+.tables-wrap h2 { font-family: var(--display); font-weight: 400; letter-spacing: .3em; text-transform: uppercase; color: var(--gold-hi); font-size: 22px; margin: 0 0 22px; text-align: center; }
+.table-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(14px, 2.4vw, 30px); }
+.tcard { position: relative; display: flex; flex-direction: column; text-align: left; padding: 0; overflow: hidden; cursor: pointer; outline: none;
+  color: var(--text); font-family: var(--serif); border-radius: 6px; border: 1px solid rgba(228, 183, 100, .35);
+  background: linear-gradient(180deg, rgba(24, 14, 16, .96), rgba(10, 6, 8, .97)); box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.tcard[data-theme="ryujin"] { background: linear-gradient(180deg, rgba(10, 28, 42, .96), rgba(4, 10, 18, .97)); }
+.tcard:hover, .tcard:focus-visible { transform: translateY(-4px); border-color: var(--gold); box-shadow: 0 30px 70px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 220, 150, .25), 0 0 40px rgba(255, 180, 90, .18); }
+.tcard[data-theme="ryujin"]:hover, .tcard[data-theme="ryujin"]:focus-visible { box-shadow: 0 30px 70px rgba(0, 0, 0, .7), 0 0 0 1px rgba(160, 255, 240, .25), 0 0 40px rgba(63, 214, 198, .22); }
+.tc-img { position: relative; aspect-ratio: 16 / 10; background-size: cover; background-position: center 30%; background-color: #06060a; }
+.tc-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(6, 4, 8, .92) 100%); }
+.tcard[data-theme="ryujin"] .tc-img::after { background: linear-gradient(180deg, transparent 45%, rgba(4, 10, 18, .94) 100%); }
+.tc-kanji { position: absolute; right: 16px; bottom: 6px; z-index: 1; font-family: var(--kanji); font-weight: 800; font-size: clamp(40px, 5vw, 64px); line-height: 1;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 50%, var(--gold-lo)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .8)); }
+.tc-body { padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.tc-name { font-family: var(--display); font-size: clamp(22px, 2.4vw, 30px); letter-spacing: .32em; color: var(--gold-hi); }
+.tc-sub { font-style: italic; font-size: 17px; letter-spacing: .12em; color: #f6b8c8; }
+.tcard[data-theme="ryujin"] .tc-sub { color: #9ff0e4; }
+.tc-blurb { margin: 4px 0 2px; font-size: 16px; line-height: 1.35; color: var(--muted); }
+.tc-feat { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tc-feat li { font-family: var(--display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; border: 1px solid rgba(228, 183, 100, .3); color: var(--gold-hi); background: rgba(228, 183, 100, .06); }
+.tc-best { margin-top: auto; padding-top: 10px; font-family: var(--display); font-size: 14px; letter-spacing: .12em; color: var(--text); border-top: 1px solid rgba(228, 183, 100, .15); }
+.tc-best span { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: .24em; margin-right: 6px; }
+.tc-flag { position: absolute; top: 12px; left: 12px; font-family: var(--display); font-size: 11px; letter-spacing: .24em; text-transform: uppercase; padding: 5px 10px; border-radius: 3px; background: rgba(6, 4, 8, .7); border: 1px solid var(--gold); color: var(--gold-hi); }
+@media (max-width: 760px), (max-aspect-ratio: 3/4) {
+  .table-cards { grid-template-columns: 1fr; }
+  .tc-img { aspect-ratio: 16 / 8; }
+  .tc-blurb { font-size: 15px; }
+  .chev { width: 38px; height: 38px; }
+}
+
+/* ---------------------------------------------------------------- veil between tables */
+#veil { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, rgba(10, 10, 20, .96), rgba(2, 2, 6, 1) 70%); opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility .45s; pointer-events: none; z-index: 5; }
+#veil.show { opacity: 1; visibility: visible; pointer-events: auto; }
+.veil-in { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+#veilFill { height: 100%; width: 0; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); transition: width .25s; }

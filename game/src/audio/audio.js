@@ -37,9 +37,9 @@ export class Audio {
     this.duck = c.createGain(); this.duck.connect(this.mus);
     this.applyVolumes();
     this.player = new MusicPlayer(c, this.duck);
-    await Promise.all([this._loadAll(), this.player.load().catch(e => console.warn('music load failed', e))]);
+    await Promise.all([this._loadAll(), this.player.load(this.songs || undefined).catch(e => console.warn('music load failed', e))]);
     this.ready = true;
-    if (this.pendingMusic !== undefined) this.music(this.pendingMusic);
+    if (this.pendingMusic) { const m = this.pendingMusic; this.pendingMusic = null; this.musicName = m; this.player.play(m); }
   }
   resume() { if (this.ctx && this.ctx.state !== 'running' && !document.hidden) this.ctx.resume(); }
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend(); }
@@ -112,11 +112,17 @@ export class Audio {
     g.cancelScheduledValues(t); g.setTargetAtTime(on ? 0.4 : 1, t, on ? 0.08 : 0.3);
   }
 
+  // the table maps logical sections (attract, main, multiball, frenzy, tsukimi) to its own song cues
+  setTable(def) {
+    this.cueMap = def.music || {}; this.songs = def.songs;
+    if (this.player) this.player.load(def.songs).catch(e => console.warn('music load failed', e));
+  }
   music(name) {
-    if (!this.ready) { this.pendingMusic = name; return; }
-    if (name === this.musicName) return;
-    this.musicName = name;
-    this.player && this.player.play(name);
+    const cue = name && this.cueMap && this.cueMap[name] ? this.cueMap[name] : name;
+    if (!this.ready) { this.pendingMusic = cue; return; }
+    if (cue === this.musicName) return;
+    this.musicName = cue;
+    this.player && this.player.play(cue);
   }
 
   // continuous rolling noise per ball: volume & rate follow speed, voice follows surface

@@ -1,6 +1,11 @@
-# 月見 TSUKIMI — Moonlit Koi Garden
+# 月見 TSUKIMI · 竜神 RYŪJIN
 
-Trójwymiarowy pinball działający w przeglądarce. Nocny japoński ogród: koi, sakura, latarnie i brama torii pod pełnią księżyca.
+Trójwymiarowy pinball działający w przeglądarce, z dwoma stołami do wyboru:
+
+- **月見 Tsukimi — Moonlit Koi Garden**: nocny japoński ogród: koi, sakura, latarnie i brama torii pod pełnią księżyca.
+- **竜神 Ryūjin — Pałac Smoczego Króla**: podwodny pałac morskiego smoka: jadeitowa rampa, brama Ryūgū-jō, perłowe muszle, cele przypływu i wir Uzumaki. Własna muzyka, paleta, obudowa i zasady.
+
+Stół wybierasz w menu **Wybierz stół**, strzałkami ← → (lub strzałkami przy logo) na ekranie tytułowym albo przesuwając palcem po ekranie tytułowym. Każdy stół ma własną tabelę rekordów.
 
 **▶ Zagraj online: https://apkmason.dev/pinball-3d/**
 
@@ -40,7 +45,7 @@ Repozytorium zawiera workflow `.github/workflows/deploy.yml`, który buduje grę
 
 Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicjały rekordu ustawia się strzałkami nad i pod literami. Grafika domyślnie działa w trybie **Auto**: telefony i tablety startują w jakości średniej, a przy utrzymującym się spadku płynności gra sama obniża jakość (Ustawienia → Grafika).
 
-## Zasady
+## Zasady — Tsukimi
 
 - **TSU · KI · MI**: trzy górne tory. Komplet podnosi mnożnik bonusu i zapala LOCK, a flipperami przesuwasz zapalone tory. Tor migający przy wyrzucie to **Skill Shot**.
 - **Moon Multiball**: przy zapalonym LOCK trafiaj w chram pod bramą torii. Druga zablokowana kulka uruchamia multiball z trzema kulkami.
@@ -50,6 +55,15 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 - **Latarnia**: saucer po lewej przyznaje nagrodę-niespodziankę: punkty, kickback, ochronę kulki, poziom latarni, a czasem dodatkową kulkę.
 - **Kombo i Koi Loop**: szybkie serie rampa/orbita budują kombo. Lewa i prawa orbita pod rząd to KOI LOOP.
 - Kickback w lewym outlane'ie, ochrona kulki na starcie, tilt przy zbyt częstym szturchaniu, bonus na koniec kulki, tabela rekordów z inicjałami.
+
+## Zasady — Ryūjin
+
+- **R · Y · U**: trzy górne tory. Komplet podnosi mnożnik bonusu i zapala LOCK; tor migający przy wyrzucie to **Skill Shot**.
+- **Dragon Multiball**: przy zapalonym LOCK trafiaj w bramę pałacu. Druga zablokowana kulka budzi smoka: multiball z trzema kulkami, jackpoty na rampie i orbitach, potem **Super Jackpot** w pałacu.
+- **Wir Uzumaki**: trzy perłowe muszle po lewej rozkręcają wir na środku stołu; bumpery i spinner punktują wielokrotnie.
+- **Osiem pereł**: rampa, orbity i cele przypływu dokładają perły wokół wiru. Przy ośmiu strzał w pałac uruchamia tryb **Ryūgū-jō** z podwójnymi punktami i skarbami.
+- **Przypływ**: dwa cele na prawej ścianie — komplet to dwie perły i kickback, co trzeci komplet zapala dodatkową kulkę.
+- **Koralowa grota** (saucer), **kombo** i **Pętla Smoka** (lewa i prawa orbita pod rząd).
 
 ## Technologia
 
@@ -61,6 +75,7 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 ## Zasoby
 
 - Grafiki stołu, plastików i zabawek oraz oba utwory muzyczne („月夜のピンボール”, „月庭の静けさ”) pochodzą od autora projektu.
+- Grafiki stołu Ryūjin (smok, brama pałacu, perła, latarnia, bumpery, flippery, wizualizacja) i utwór „Zen Pinball Garden” również pochodzą od autora projektu; plansza, plastiki i obudowa Ryūjin zostały z nich skomponowane.
 - Mechaniczne efekty dźwiękowe są wycięte z nagrań społeczności freesound („pinball full game”, „ball in hole”, „instant drain”) i uzupełnione dźwiękami syntezowanymi (koto, taiko, shakuhachi, dzwony).
 - Fonty: Marcellus, Shippori Mincho i Cormorant Garamond (SIL Open Font License) przez pakiety @fontsource.
 - Silnik 3D: [three.js](https://threejs.org) (MIT).

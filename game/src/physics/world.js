@@ -137,6 +137,7 @@ export class World {
       return { ...g, nx, ny, len: l, swing: 0, swingV: 0 };
     });
     this.drops = layout.drops.map(d => ({ ...d, up: true, anim: 0 }));
+    this.standups = (layout.standups || []).map(t => ({ ...t, anim: 0, cool: 0 }));
     this.bumperState = layout.bumpers.map(b => ({ ...b, cool: 0, anim: 0 }));
     this.slingState = layout.slings.map(s => ({ ...s, cool: 0, anim: 0 }));
     this.rampPath = new Path3(layout.ramp.path);
@@ -187,6 +188,11 @@ export class World {
       }
     }
     for (const b of L.bumpers) this.circles.push({ x: b.p[0], y: b.p[1], r: b.r, mat: 'bumper', kind: 'bumper', id: b.id });
+    // stand-up targets: fixed, springy faces that register a hit (Ryūjin)
+    (L.standups || []).forEach((t, i) => {
+      const hx = t.dir[0] * t.half, hy = t.dir[1] * t.half;
+      this.segs.push({ ax: t.c[0] - hx, ay: t.c[1] - hy, bx: t.c[0] + hx, by: t.c[1] + hy, r: t.thick / 2, mat: 'plastic', kind: 'standup', id: t.id, idx: i, enabled: true, nx: t.n[0], ny: t.n[1] });
+    });
     L.drops.forEach((d, i) => {
       const hx = d.dir[0] * d.half, hy = d.dir[1] * d.half;
       this.segs.push({ ax: d.c[0] - hx, ay: d.c[1] - hy, bx: d.c[0] + hx, by: d.c[1] + hy, r: d.thick / 2, mat: 'target', kind: 'drop', id: d.id, idx: i, enabled: true });
@@ -329,6 +335,7 @@ export class World {
     for (const b of this.bumperState) { b.cool -= dt; b.anim = Math.max(0, b.anim - dt * 12); }
     for (const s of this.slingState) { s.cool -= dt; s.anim = Math.max(0, s.anim - dt * 14); }
     for (const d of this.drops) d.anim += ((d.up ? 0 : 1) - d.anim) * Math.min(1, dt * 30);
+    for (const t of this.standups) { t.cool -= dt; t.anim = Math.max(0, t.anim - dt * 9); }
     const tt = this.turntable;
     tt.omega += (tt.target - tt.omega) * Math.min(1, dt * 1.5);
     tt.angle += tt.omega * dt;
@@ -452,6 +459,14 @@ export class World {
       if (d0.up && vin > 0.12) {
         d0.up = false; s.enabled = false;
         this.emit('drop', { id: d0.id, idx: s.idx, ball: b, speed: vin });
+        return;
+      }
+    }
+    if (s.kind === 'standup') {
+      const t0 = this.standups[s.idx];
+      if (vin > 0.1 && t0.cool <= 0) {
+        t0.cool = 0.12; t0.anim = Math.min(1, 0.35 + vin * 0.4);
+        this.emit('target', { id: t0.id, bank: t0.bank, ball: b, speed: vin });
         return;
       }
     }
