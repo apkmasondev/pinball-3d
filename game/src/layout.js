@@ -41,7 +41,7 @@ function sample(fn, t0, t1, n) {
   return out;
 }
 // Catmull-Rom through control points (art px), returns dense polyline
-function spline(ctrl, perSeg = 8) {
+export function spline(ctrl, perSeg = 8) {
   const out = [];
   for (let i = 0; i < ctrl.length - 1; i++) {
     const p0 = ctrl[Math.max(0, i - 1)], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[Math.min(ctrl.length - 1, i + 2)];

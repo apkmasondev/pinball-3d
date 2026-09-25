@@ -142,14 +142,19 @@ export class TableView {
     const gltfP = new Promise((res, rej) => new GLTFLoader().load(`${import.meta.env.BASE_URL}${this.def.model}`, res,
       (e) => { if (onProgress && e.total) onProgress(e.loaded / e.total); }, rej));
     // the playfield's UVs follow glTF (v = 0 at the back of the table): its images are not flipped
-    const [base, emit, lampId, ao, gltf] = await Promise.all([
+    // the playfield print (art, inserts and labels) is composed offline: tools/compose_print.py
+    const [base, emit, lampId, ao, gltf, targetArt] = await Promise.all([
       loadTexture(loader, TEX('playfield_base.jpg'), { aniso, flipY: false }),
       loadTexture(loader, TEX('playfield_emit.jpg'), { aniso, flipY: false }),
       loadTexture(loader, TEX('playfield_lampid.png'), { srgb: false, nearest: true, aniso: 1, flipY: false }),
       loadTexture(loader, TEX('playfield_ao.jpg'), { srgb: false, aniso: 4, flipY: false }).catch(() => null),
       gltfP,
+      Promise.all(Object.entries(this.def.targetArt || {}).map(async ([bank, file]) =>
+        [bank, await loadTexture(loader, TEX(file), { aniso, flipY: false })])),
     ]);
     this.textures = { base, emit, lampId, ao };
+    this.targetArt = Object.fromEntries(targetArt);
+    for (const [bank, texture] of targetArt) this.textures[`target_${bank}`] = texture;
     this.pfMat = playfieldMaterial(base, emit, lampId, this.lamps, ao, this.def.gi || GI_SPOTS, this.def.giColor || [1.0, 0.62, 0.32]);
     this._processGLB(gltf.scene);
     this._lights();
@@ -218,10 +223,25 @@ export class TableView {
         if (n.startsWith('standee_')) { m.roughness = 0.5; m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; m.emissiveIntensity = 0.22; }
       }
       if (n.startsWith('acrylic')) { m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.roughness = 0.05; m.envMapIntensity = 1.2; }
+      if (n.startsWith('jade_ramp_')) {
+        m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide;
+        m.forceSinglePass = true; m.roughness = 0.24; m.envMapIntensity = 0.4;
+        m.clearcoat = 0.18; m.clearcoatRoughness = 0.3;
+      }
       if (['gold', 'chrome', 'gold_dark', 'steel'].includes(n)) m.envMapIntensity = 1.0;
       if (n === 'wire') m.envMapIntensity = 0.75;
       if (n === 'pearl') { m.envMapIntensity = 1.3; }
-      if (n.startsWith('targetface_')) { m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; m.emissiveIntensity = 0.12; }
+      if (n.startsWith('targetface_')) {
+        const art = this.targetArt[n.slice('targetface_'.length)];
+        if (art) {
+          // Retain the embedded texture for disposal when switching tables.
+          this.textures[`embedded_${n}`] = m.map;
+          m.map = art;
+          m.roughness = 0.45; m.clearcoat = 0.15; m.envMapIntensity = 0.4;
+        }
+        m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map;
+        m.emissiveIntensity = art ? 0.26 : 0.12;
+      }
       if (n.startsWith('lacquer')) m.envMapIntensity = 0.8;
       if (n === 'innerwall_art') { m.clearcoat = 0.15; m.roughness = 0.55; m.envMapIntensity = 0.5; }
       // painted back panel: a touch of self-light so the moon halo reads behind the medallion
@@ -268,7 +288,7 @@ export class TableView {
       const mesh = new THREE.Mesh(geo, m);
       const n = m.name || '';
       mesh.castShadow = !m.transparent && !n.startsWith('card_') && n !== 'backglass';
-      mesh.receiveShadow = true;
+      mesh.receiveShadow = !n.startsWith('jade_ramp_');
       mesh.name = 'merged_' + n;
       if (m.transparent) mesh.renderOrder = 5;
       merged.add(mesh);
@@ -313,7 +333,7 @@ export class TableView {
     const mat = new THREE.MeshBasicMaterial({ color: 0x000000, envMap, reflectivity: 0.09, combine: THREE.AddOperation, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     const g = new THREE.Mesh(geo, mat);
     g.rotation.x = -Math.PI / 2;
-    g.position.copy(tv(0, len / 2 - 0.04, 0.108));
+    g.position.copy(tv(0, len / 2 - 0.04, L.glassHeight ?? 0.108));
     g.renderOrder = 10; g.name = 'glass';
     this.root.add(g);
     this.glass = g;

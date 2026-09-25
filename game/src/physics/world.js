@@ -366,6 +366,31 @@ export class World {
         b.vx += (sx - b.vx) * k; b.vy += (sy - b.vy) * k;
       }
     }
+    // Ryūjin's whirlpool: while tt.vortex is set, a ball that rolls in is drawn into a tight orbit,
+    // scores every turn (vortexSpin) and is flung out after a moment; a cooldown stops instant recapture.
+    if (tt.vortex && !(b.vortexCool > this.time)) {
+      const dx = b.x - tt.p[0], dy = b.y - tt.p[1], d2 = dx * dx + dy * dy, R = tt.r * 1.1;
+      const Rc = b.vortexT ? R * 1.7 : R;          // once caught, the pull holds it a little further out
+      if (d2 < Rc * Rc && d2 > 1e-10 && b.z <= 0.001) {
+        const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, sg = tt.omega >= 0 ? 1 : -1;
+        if (!b.vortexT) { b.vortexT = 0; b.vortexA = Math.atan2(dy, dx); b.vortexTurn = 0; this.emit('vortexIn', { ball: b }); }
+        b.vortexT += dt;
+        const rho = tt.r * 0.55, vOrb = 0.5;
+        const wx = -ny * sg * vOrb - nx * (d - rho) * 24, wy = nx * sg * vOrb - ny * (d - rho) * 24;
+        const k = Math.min(1, 40 * dt);
+        b.vx += (wx - b.vx) * k; b.vy += (wy - b.vy) * k + this.gRoll * dt;
+        const a = Math.atan2(dy, dx); let da = a - b.vortexA;
+        if (da > Math.PI) da -= 2 * Math.PI; else if (da < -Math.PI) da += 2 * Math.PI;
+        b.vortexA = a; b.vortexTurn += Math.abs(da);
+        if (b.vortexTurn >= 2 * Math.PI) { b.vortexTurn -= 2 * Math.PI; this.emit('vortexSpin', { ball: b }); }
+        if (b.vortexT > 1.5) {
+          // fling out along the orbit, a little outward
+          b.vx = (-ny * sg * 1.25 + nx * 0.55) * 1.1; b.vy = (nx * sg * 1.25 + ny * 0.55) * 1.1;
+          b.vortexT = 0; b.vortexCool = this.time + 2.5;
+          this.emit('vortexOut', { ball: b });
+        }
+      } else if (b.vortexT) b.vortexT = 0;
+    }
     if (this.magnet) {
       const m = this.magnet; const dx = m.x - b.x, dy = m.y - b.y; const d = Math.hypot(dx, dy);
       if (d < m.r && d > 1e-4) { b.vx += dx / d * m.f * dt; b.vy += dy / d * m.f * dt; }
@@ -648,7 +673,8 @@ export class World {
     const T = path.tangent(b.s);
     // gravity in table frame: (0, -gPlane, -gNormal)
     let a = (-this.gPlane * T[1] - this.gNormal * T[2]) * 5 / 7;
-    const fr = (b.pathId === 'ramp' && b.s < path.length * this.L.ramp.plasticUntil) ? 0.10 : 0.16;
+    const plasticEnd = this.L.ramp.plasticLength ?? path.length * this.L.ramp.plasticUntil;
+    const fr = (b.pathId === 'ramp' && b.s < plasticEnd) ? 0.10 : 0.16;
     a -= Math.sign(b.u) * fr;
     a -= Math.sign(b.u) * 0.02 * b.u * b.u;
     b.u += a * dt;

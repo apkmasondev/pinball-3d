@@ -17,3 +17,8 @@ Thumbs.db
 .idea/
 .env
 .env.*
+
+# local development aids (notes, prompts, audit tools, layout tests) stay out of the public repo
+/game/*.md
+/game/tests/
+/game/tools/

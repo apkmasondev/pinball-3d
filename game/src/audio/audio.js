@@ -1,5 +1,5 @@
 import MANIFEST from './manifest.json';
-import { MusicPlayer } from './music.js';
+import { MusicPlayer, MENU_CUE, MENU_SONG } from './music.js';
 
 const BASE = `${import.meta.env.BASE_URL}assets/audio/`;
 
@@ -112,13 +112,14 @@ export class Audio {
     g.cancelScheduledValues(t); g.setTargetAtTime(on ? 0.4 : 1, t, on ? 0.08 : 0.3);
   }
 
-  // the table maps logical sections (attract, main, multiball, frenzy, tsukimi) to its own song cues
+  // Tables own gameplay cues; menu music belongs to the application.
   setTable(def) {
-    this.cueMap = def.music || {}; this.songs = def.songs;
-    if (this.player) this.player.load(def.songs).catch(e => console.warn('music load failed', e));
+    this.cueMap = def.music || {};
+    this.songs = def.songs ? [...new Set([MENU_SONG, ...def.songs])] : undefined;
+    if (this.player) this.player.load(this.songs).catch(e => console.warn('music load failed', e));
   }
   music(name) {
-    const cue = name && this.cueMap && this.cueMap[name] ? this.cueMap[name] : name;
+    const cue = name === 'menu' ? MENU_CUE : (this.cueMap?.[name] ?? name);
     if (!this.ready) { this.pendingMusic = cue; return; }
     if (cue === this.musicName) return;
     this.musicName = cue;

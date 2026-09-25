@@ -2,10 +2,10 @@
 
 Trójwymiarowy pinball działający w przeglądarce, z dwoma stołami do wyboru:
 
-- **月見 Tsukimi — Moonlit Koi Garden**: nocny japoński ogród: koi, sakura, latarnie i brama torii pod pełnią księżyca.
-- **竜神 Ryūjin — Pałac Smoczego Króla**: podwodny pałac morskiego smoka: jadeitowa rampa, brama Ryūgū-jō, perłowe muszle, cele przypływu i wir Uzumaki. Własna muzyka, paleta, obudowa i zasady.
+- **月見 Tsukimi — Moonlit Koi Garden**: nocny ogród na wiśniowej lace: koi, sakura, latarnie, most nad stawem i brama torii pod pełnią księżyca. Cele opadające K-O-I, wirujący dysk koi.
+- **竜神 Ryūjin — Pałac Smoczego Króla**: szafirowa posadzka pałacu z wygrawerowanym smokiem i własny, asymetryczny układ: Most Pereł wjeżdża z lewej i przechodzi łukiem nad stołem, pałac z bramą Ryūgū-jō stoi w prawym górnym rogu, wir po lewej naprawdę łapie kulkę. Perłowe muszle, cele przypływu, Perłowy Hurry-Up. Własna muzyka, paleta, obudowa i zasady.
 
-Stół wybierasz w menu **Wybierz stół**, strzałkami ← → (lub strzałkami przy logo) na ekranie tytułowym albo przesuwając palcem po ekranie tytułowym. Każdy stół ma własną tabelę rekordów.
+Stół wybierasz w menu **Wybierz stół**, strzałkami ← → (lub strzałkami przy logo) na ekranie tytułowym albo przesuwając palcem po ekranie tytułowym. Każdy stół ma własną tabelę rekordów i własną muzykę w grze; menu ma wspólny, spokojny motyw.
 
 **▶ Zagraj online: https://apkmason.dev/pinball-3d/**
 
@@ -59,23 +59,26 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 ## Zasady — Ryūjin
 
 - **R · Y · U**: trzy górne tory. Komplet podnosi mnożnik bonusu i zapala LOCK; tor migający przy wyrzucie to **Skill Shot**.
-- **Dragon Multiball**: przy zapalonym LOCK trafiaj w bramę pałacu. Druga zablokowana kulka budzi smoka: multiball z trzema kulkami, jackpoty na rampie i orbitach, potem **Super Jackpot** w pałacu.
-- **Wir Uzumaki**: trzy perłowe muszle po lewej rozkręcają wir na środku stołu; bumpery i spinner punktują wielokrotnie.
-- **Osiem pereł**: rampa, orbity i cele przypływu dokładają perły wokół wiru. Przy ośmiu strzał w pałac uruchamia tryb **Ryūgū-jō** z podwójnymi punktami i skarbami.
-- **Przypływ**: dwa cele na prawej ścianie — komplet to dwie perły i kickback, co trzeci komplet zapala dodatkową kulkę.
-- **Koralowa grota** (saucer), **kombo** i **Pętla Smoka** (lewa i prawa orbita pod rząd).
+- **Most Pereł**: wjazd po lewej, łuk nad górą stołu, zjazd na prawą łapkę.
+- **Dragon Multiball**: przy zapalonym LOCK trafiaj w pałac w prawym górnym rogu (powrót z pałacu prowadzi pod mostem na lewą łapkę). Druga zablokowana kulka budzi smoka: multiball z trzema kulkami, jackpoty na moście i orbitach, potem **Super Jackpot** w pałacu.
+- **Wir Uzumaki**: trzy perłowe muszle po prawej rozkręcają wir. Przez 20 sekund wir wciąga kulkę na orbitę, punktuje każde okrążenie i wyrzuca ją z impetem; bumpery i spinner punktują wielokrotnie.
+- **Przypływ i Perłowy Hurry-Up**: dwa cele na lewej ścianie. Komplet daje dwie perły, zapala kickback i uruchamia Hurry-Up: 400 000 maleje do 100 000 w 15 sekund (odliczanie na wyświetlaczu), zbierasz je na Moście Pereł. W multiballu komplet dokłada kulkę (raz na multiball), a co trzeci komplet zapala dodatkową kulkę.
+- **Osiem pereł**: most, orbity i przypływ dokładają perły wokół wiru. Przy ośmiu strzał w pałac uruchamia tryb **Ryūgū-jō** z podwójnymi punktami i skarbami.
+- **Koralowa grota** (kieszeń po prawej, nagroda-niespodzianka), **kombo** i **Pętla Smoka** (lewa i prawa orbita pod rząd).
 
 ## Technologia
 
 - **Three.js + Vite**: renderowanie PBR, bloom, dynamiczne odbicia w kulce, inserty zapalane shaderem dokładnie w kształcie namalowanych lamp.
 - **Własny silnik fizyki pinballa** (`game/src/physics/world.js`): krok 2400 Hz, flippery z przekazywaniem pędu, rampy i druciane rurki jako ścieżki 3D, bramki jednokierunkowe, spinner, saucer, scoop z VUK, kickback.
-- **Stół i obudowa** modelowane w Blenderze na podstawie jednego pliku układu (`game/src/layout.js`), wspólnego dla grafiki i fizyki.
+- **Stoły i obudowy** modelowane w Blenderze na podstawie plików układu (`game/src/layout.js`, `game/src/layout_ryujin.js`), wspólnych dla grafiki, fizyki i nadruku lamp. Rejestr stołów: `game/src/tables.js`.
+- **Nadruk pola** każdego stołu to jedna gotowa tekstura: ilustracja tła, wkładki lamp i napisy są składane przed publikacją, więc gra ładuje jeden obraz zamiast kilku warstw.
 - **Muzyka adaptacyjna**: sekcje utworów zapętlane na granicach fraz, przejścia czekają na najbliższy takt (`game/src/audio/music.json`).
 
 ## Zasoby
 
 - Grafiki stołu, plastików i zabawek oraz oba utwory muzyczne („月夜のピンボール”, „月庭の静けさ”) pochodzą od autora projektu.
-- Grafiki stołu Ryūjin (smok, brama pałacu, perła, latarnia, bumpery, flippery, wizualizacja) i utwór „Zen Pinball Garden” również pochodzą od autora projektu; plansza, plastiki i obudowa Ryūjin zostały z nich skomponowane.
+- Grafiki stołu Ryūjin (smok, brama pałacu, perła, latarnia, bumpery, flippery, wizualizacja) i utwór „Zen Pinball Garden” również pochodzą od autora projektu; plastiki i obudowa Ryūjin zostały z nich skomponowane.
+- Tła obu pól gry (wiśniowa laka z koi, szafirowa posadzka ze smokiem) oraz grafiki celów Ryūjin powstały w narzędziu do generowania obrazów na zamówienie autora projektu.
 - Mechaniczne efekty dźwiękowe są wycięte z nagrań społeczności freesound („pinball full game”, „ball in hole”, „instant drain”) i uzupełnione dźwiękami syntezowanymi (koto, taiko, shakuhachi, dzwony).
 - Fonty: Marcellus, Shippori Mincho i Cormorant Garamond (SIL Open Font License) przez pakiety @fontsource.
 - Silnik 3D: [three.js](https://threejs.org) (MIT).

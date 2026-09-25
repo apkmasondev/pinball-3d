@@ -240,7 +240,8 @@ export class Display {
     let left = `${this.strings.ball || 'BALL'} ${h.ball}`;
     let right = h.bonusX > 1 ? `${h.bonusX}X` : '';
     const hn = this.hudNames || { tsukimi: 'TSUKIMI', frenzy: 'FRENZY' };
-    if (h.mb) right = 'MULTIBALL';
+    if (h.hurry > 0) right = `HURRY ${Math.round(h.hurry / 1000)}K`;
+    else if (h.mb) right = 'MULTIBALL';
     else if (h.tsukimi > 0) right = `${hn.tsukimi} ${Math.ceil(h.tsukimi)}`;
     else if (h.frenzy > 0) right = `${hn.frenzy} ${Math.ceil(h.frenzy)}`;
     else if (h.lockLit) right = 'LOCK LIT';

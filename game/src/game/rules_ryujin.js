@@ -10,19 +10,21 @@ export const T = {
     ...BASE.en,
     lock: 'LOCK IS LIT', locked: 'BALL LOCKED', multiball: 'DRAGON MULTIBALL', jackpot: 'JACKPOT', superJackpot: 'SUPER JACKPOT',
     frenzy: 'UZUMAKI', tsukimi: 'RYUGU-JO', fullMoon: 'EIGHT PEARLS', fullMoonReady: 'ENTER THE PALACE',
-    mystery: 'CORAL CAVE', koiLoop: 'DRAGON LOOP', combo: 'TIDE COMBO', ramp: 'JADE RAMP', lanes: 'R-Y-U',
+    mystery: 'CORAL CAVE', koiLoop: 'DRAGON LOOP', combo: 'TIDE COMBO', ramp: 'PEARL BRIDGE', lanes: 'R-Y-U',
     lantern: 'DRAGON SCALE', moonPhase: 'PEARL', koiBank: 'PEARL SHELLS', tsukimiSub: '2X · TREASURE 100K', moonShot: 'TREASURE',
     shrine: 'PALACE', bonusDrops: 'SHELLS', bonusJets: 'SCALES', bonusSpinner: 'SPINNER',
     shellLit: 'SHELL', tide: 'TIDE', tideRises: 'HIGH TIDE', whirlLit: 'WHIRLPOOL',
+    hurry: 'PEARL HURRY-UP', hurryShot: 'SHOOT THE BRIDGE', addBall: 'ADD-A-BALL', spin: 'UZUMAKI SPIN',
   },
   pl: {
     ...BASE.pl,
     lock: 'LOCK AKTYWNY', locked: 'KULKA ZABLOKOWANA', multiball: 'DRAGON MULTIBALL', jackpot: 'JACKPOT', superJackpot: 'SUPER JACKPOT',
     frenzy: 'UZUMAKI', tsukimi: 'RYUGU-JO', fullMoon: 'OSIEM PEREŁ', fullMoonReady: 'WEJDŹ DO PAŁACU',
-    mystery: 'KORALOWA GROTA', koiLoop: 'PĘTLA SMOKA', combo: 'KOMBO PRZYPŁYWU', ramp: 'JADEITOWA RAMPA', lanes: 'R-Y-U',
+    mystery: 'KORALOWA GROTA', koiLoop: 'PĘTLA SMOKA', combo: 'KOMBO PRZYPŁYWU', ramp: 'MOST PEREŁ', lanes: 'R-Y-U',
     lantern: 'ŁUSKA SMOKA', moonPhase: 'PERŁA', koiBank: 'PERŁOWE MUSZLE', tsukimiSub: '2X · SKARBY 100K', moonShot: 'SKARB',
     shrine: 'PAŁAC', bonusDrops: 'MUSZLE', bonusJets: 'ŁUSKI', bonusSpinner: 'SPINNER',
     shellLit: 'MUSZLA', tide: 'PRZYPŁYW', tideRises: 'WYSOKI PRZYPŁYW', whirlLit: 'WIR',
+    hurry: 'PERŁOWY HURRY-UP', hurryShot: 'STRZEL W MOST', addBall: 'DODATKOWA KULKA', spin: 'OBRÓT WIRU',
   },
 };
 
@@ -34,9 +36,36 @@ export class RyujinRules extends Rules {
     this.modeAnim = 'pearl';
   }
   _initPlayer(p) { p.tide = [false, false]; p.tideCount = 0; p.jpBase = this.jpBase0; }
-  _initBall(b) { b.shells = [false, false, false]; b.shellT = -9; }
+  _initBall(b) { b.shells = [false, false, false]; b.shellT = -9; b.hurryUntil = 0; b.addBallUsed = false; b.spins2 = 0; }
+
+  // Pearl hurry-up: 400k counting down to 100k over 15 s, collected on the Pearl Bridge
+  hurryValue() { const b = this.b; if (!b || this.t >= b.hurryUntil) return 0; return Math.round((100000 + 300000 * (b.hurryUntil - this.t) / 15) / 1000) * 1000; }
+  _shot(kind) {
+    const A = this.api, b = this.b;
+    if (kind === 'ramp' && !b.tilted && this.t < b.hurryUntil) {
+      const v = this.add(this.hurryValue()); b.hurryUntil = 0;
+      A.audio.play('jackpot'); A.fx.flash(0.9, 0xbff6ee); A.fx.kick(0.5); A.fx.lightShow('jackpot', 1.2);
+      A.display.show({ big: this.tr('hurry'), small: fmt(v), dur: 2.0, prio: 5, anim: 'pearl' });
+    }
+    super._shot(kind);
+  }
+  hud() { const h = super.hud(); if (h) h.hurry = this.hurryValue(); return h; }
+  update(dt) {
+    super.update(dt);
+    const b = this.b; if (!b) return;
+    // the whirlpool only grips the ball while Uzumaki runs
+    this.api.world.turntable.vortex = this.state === 'playing' && !b.tilted && this.t < b.frenzyUntil ? 1 : 0;
+  }
 
   handle(e) {
+    if (e.type === 'vortexIn' || e.type === 'vortexOut' || e.type === 'vortexSpin') {
+      if (this.state !== 'playing' || this.b.tilted) return;
+      const A = this.api;
+      if (e.type === 'vortexIn') A.audio.play('rampEnter', 0.8);
+      else if (e.type === 'vortexOut') { A.audio.play('saucerKick', 0.9); A.fx.kick(0.25); }
+      else { this.b.spins2++; const v = this.add(15000 + 5000 * this.p.lanternLevel); A.audio.play('spinner', 1); A.display.pop(`${this.tr('spin')} ${fmt(v)}`); }
+      return;
+    }
     if (e.type === 'target') {
       if (this.state !== 'playing') return;
       this.b.lastSwitchT = this.t;
@@ -81,7 +110,16 @@ export class RyujinRules extends Rules {
           let small = fmt(v) + ' · +2 ' + this.tr('moonPhase');
           if (!A.world.kickback.lit) { A.world.kickback.lit = true; small = this.tr('kickbackLit'); }
           if (p.tideCount % 3 === 0 && !p.extraBallAwarded && !p.extraBallLit) { p.extraBallLit = true; small = this.tr('extraBallLit'); A.audio.play('knocker'); }
-          A.display.show({ big: this.tr('tideRises'), small, dur: 1.6, prio: 3, anim: 'waves' });
+          let big = this.tr('tideRises');
+          if (b.mb && !b.addBallUsed) {
+            // once per multiball the tide brings one more ball
+            b.addBallUsed = true; big = this.tr('addBall'); small = this.tr('multiball');
+            A.audio.play('extraBall'); this.serveBall(true);
+          } else if (!b.mb) {
+            b.hurryUntil = this.t + 15; small = `${this.tr('hurryShot')} · 400K`;
+            A.audio.play('fullMoonReady', 0.8);
+          }
+          A.display.show({ big, small, dur: 1.8, prio: 4, anim: 'waves' });
           this._moon(2);
         } else A.display.pop(`${this.tr('tide')} ${p.tide.filter(Boolean).length}/2`);
       }
@@ -118,8 +156,9 @@ export class RyujinRules extends Rules {
     chase(['orbitL1', 'orbitL2'], (b.mb && b.jpLit[1]) || mode || (comboOpen && b.lastShot !== 'orbitL'));
     chase(['orbitR1', 'orbitR2'], (b.mb && b.jpLit[2]) || mode || (comboOpen && b.lastShot !== 'orbitR'));
     on('orbitLjp', b.mb && b.jpLit[1], 'blink'); on('orbitRjp', b.mb && b.jpLit[2], 'blink');
-    on('rampArrow', (b.mb && b.jpLit[0]) || mode || (comboOpen && b.lastShot !== 'ramp'), 'fastblink');
-    on('rampJp', b.mb && b.jpLit[0], 'blink');
+    const hurry = t < b.hurryUntil;
+    on('rampArrow', hurry || (b.mb && b.jpLit[0]) || mode || (comboOpen && b.lastShot !== 'ramp'), 'fastblink');
+    on('rampJp', hurry || (b.mb && b.jpLit[0]), hurry ? 'fastblink' : 'blink');
     on('orbitTopL', b.orbits > 0); on('orbitTopR', b.ramps > 0);
     b.shells.forEach((s, i) => on('shell' + i, s || whirl, whirl ? 'blink' : 'on'));
     on('whirlLit', whirl || b.shells.some(Boolean), whirl ? 'fastblink' : 'blink');

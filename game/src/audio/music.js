@@ -2,6 +2,10 @@ import CUES from './music.json';
 
 const BASE = `${import.meta.env.BASE_URL}assets/audio/`;
 
+// Shared across table selection, settings and the title screen.
+export const MENU_CUE = 'attract';
+export const MENU_SONG = CUES.cues[MENU_CUE].song;
+
 // Adaptive soundtrack: each cue is a section of one of the songs with its own loop range.
 // Loops are stitched with short scheduled crossfades; switching between cues waits for the next
 // downbeat of the playing song so transitions land on the bar.

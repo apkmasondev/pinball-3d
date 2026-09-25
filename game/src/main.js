@@ -220,7 +220,7 @@ async function switchTable(id) {
   if (id === def.id) { ui.show('title'); return; }
   switching = true; mode = 'switching';
   ui.veil(true, TABLES[id].loading[settings.lang] || TABLES[id].loading.en, TABLES[id].kanji);
-  audio.music(null);
+  audio.music('menu');
   bot && bot.stop();
   await new Promise(r => setTimeout(r, 450));
   try {
@@ -260,7 +260,7 @@ function toTitle() {
   audio.pauseDuck(false);
   world.turntable.target = 0.6;
   ui.show('title');
-  audio.music('attract');
+  audio.music('menu');
   demoT = 1.5;
 }
 let demoT = -1;
@@ -390,8 +390,8 @@ function eventSound(e) {
     case 'ballClick': audio.play('ballClick', Math.min(1, e.speed / 2), { pan }); break;
     case 'plungerRelease': audio.play('plungerRelease', 0.4 + e.pull * 0.6, { pan: 0.8 }); break;
     case 'autoLaunch': audio.play('plungerRelease', 0.9, { pan: 0.8 }); break;
-    case 'saucerEject': audio.play('saucerKick', 1, { pan: -0.7 }); table.flash(0, 0.7); break;
-    case 'scoopEject': audio.play('vuk', 1, { pan: 0 }); table.flash('both', 0.6); break;
+    case 'saucerEject': audio.play('saucerKick', 1, { pan }); table.flash(layout.saucer.p[0] < 0 ? 0 : 1, 0.7); break;
+    case 'scoopEject': audio.play('vuk', 1, { pan }); table.flash('both', 0.6); break;
     case 'pathDone': audio.play('ballDrop', 0.8, { pan }); break;
     case 'rampEnter': break;
   }
