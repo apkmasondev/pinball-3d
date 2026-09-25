@@ -366,6 +366,26 @@ export class UI {
         }
         return;
       }
+      // Inari: copper and gold maple leaves tumble down
+      if (document.documentElement.dataset.table === 'inari') {
+        for (const p of P) {
+          p.t += dt; p.x += (p.vx * 0.7 + Math.sin(p.t * p.w) * 30) * dt; p.y += p.vy * 0.8 * dt; p.r += p.vr * 1.4 * dt;
+          if (p.y > c.height + 20 || p.x < -40 || p.x > c.width + 40) Object.assign(p, this._newPetal(false));
+          const k = p.s * 1.25;
+          g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.scale(Math.abs(Math.sin(p.t * p.w * 0.6)) * 0.6 + 0.4, 1);
+          g.fillStyle = p.c < 14 ? `rgba(230,${90 + p.c * 3},40,${p.a})` : p.c < 28 ? `rgba(200,${50 + p.c},28,${p.a})` : `rgba(236,${150 + p.c},60,${p.a})`;
+          g.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const a = -Math.PI / 2 + (i - 2) * 0.62, b = a + 0.31;
+            g.lineTo(Math.cos(a) * k * (i === 2 ? 1 : 0.85), Math.sin(a) * k * (i === 2 ? 1 : 0.85));
+            g.lineTo(Math.cos(b) * k * 0.38, Math.sin(b) * k * 0.38);
+          }
+          g.lineTo(0, k * 0.2); g.closePath(); g.fill();
+          g.strokeStyle = `rgba(90,30,10,${p.a * 0.6})`; g.lineWidth = 0.8; g.beginPath(); g.moveTo(0, k * 0.2); g.lineTo(0, k * 0.65); g.stroke();
+          g.restore();
+        }
+        return;
+      }
       for (const p of P) {
         p.t += dt; p.x += (p.vx + Math.sin(p.t * p.w) * 22) * dt; p.y += p.vy * dt; p.r += p.vr * dt;
         if (p.y > c.height + 20 || p.x < -40 || p.x > c.width + 40) Object.assign(p, this._newPetal(false));

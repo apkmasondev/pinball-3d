@@ -20,6 +20,13 @@
    "rate": 44100,
    "barLen": 0.48102,
    "barPhase": 0.3385
+  },
+  "inari": {
+   "file": "song_inari",
+   "samples": 5344920,
+   "rate": 44100,
+   "barLen": 1.66223,
+   "barPhase": 0.3564
   }
  },
  "cues": {
@@ -91,6 +98,27 @@
    "start": 124.5,
    "loopStart": 124.5,
    "loopEnd": 136.1497,
+   "gain": 1.0
+  },
+  "in_main": {
+   "song": "inari",
+   "start": 0.0,
+   "loopStart": 20.2972,
+   "loopEnd": 113.3837,
+   "gain": 1.0
+  },
+  "in_multiball": {
+   "song": "inari",
+   "start": 76.82,
+   "loopStart": 58.5264,
+   "loopEnd": 105.0614,
+   "gain": 1.05
+  },
+  "in_lantern": {
+   "song": "inari",
+   "start": 41.9121,
+   "loopStart": 41.9121,
+   "loopEnd": 68.5065,
    "gain": 1.0
   }
  }

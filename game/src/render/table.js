@@ -183,14 +183,20 @@ export class TableView {
     d.flashers = [0, 1].map(i => {
       const g = find('flasher' + i); if (!g) return null;
       const dome = find(`flasher${i}_dome`);
-      const col = i === 0 ? new THREE.Color(1.0, 0.18, 0.12) : new THREE.Color(1.0, 0.7, 0.35);
+      const fc = this.def.flashers && this.def.flashers[i];
+      const col = fc ? new THREE.Color(...fc) : i === 0 ? new THREE.Color(1.0, 0.18, 0.12) : new THREE.Color(1.0, 0.7, 0.35);
       let mat = null;
       dome && dome.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.emissive = col.clone(); o.material.emissiveIntensity = 0; o.material.transparent = true; o.material.opacity = 0.85; o.castShadow = false; mat = o.material; } });
       const light = new THREE.PointLight(col, 0, 0.6, 1.8); light.position.set(0, 0.03, 0); g.add(light);
       return { g, mat, light, level: 0 };
     });
+    d.guard = find('guard');
+    const glowMat = (o, col) => { let m = null; o && o.traverse(c => { if (c.isMesh) { c.material = c.material.clone(); c.material.emissive = col.clone(); if (c.material.map) c.material.emissiveMap = c.material.map; m = c.material; } }); return m; };
+    d.toriiLamps = [0, 1, 2, 3, 4].map(i => { const o = find('torii_lamp' + i); return o ? { o, mat: glowMat(o, new THREE.Color(1.0, 0.55, 0.2)), lamp: this.lamps.byName.get('gate' + i) } : null; }).filter(Boolean);
+    const kit = find('toy_kitsune');
+    d.kitsune = kit ? { o: kit, mat: null, lamp: this.lamps.byName.get('kitsune') } : null;
     for (const o of [...d.gates, d.spinner]) if (o) o.userData.q0 = o.quaternion.clone();
-    for (const o of [d.plunger, d.kickback, ...d.drops, ...d.slings, ...d.standups]) if (o) o.userData.p0 = o.position.clone();
+    for (const o of [d.plunger, d.kickback, d.guard, ...d.drops, ...d.slings, ...d.standups]) if (o) o.userData.p0 = o.position.clone();
     for (const b of d.bumpers) {
       if (b.ring) b.ring.userData.p0 = b.ring.position.clone();
       if (b.lip) b.lip.userData.p0 = b.lip.position.clone();
@@ -209,7 +215,7 @@ export class TableView {
     }
     const dynSet = new Set();
     const markDyn = (o) => o && o.traverse(c => dynSet.add(c));
-    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.standups, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.backglass, d.apron, d.pearl].forEach(markDyn);
+    [...d.flippers, ...d.bumpers.map(b => b.g), ...d.flashers.filter(Boolean).map(f => f.g), ...d.drops, ...d.standups, ...d.gates, d.spinner, d.plunger, d.spring, d.kickback, d.turntable, ...d.slings, d.backglass, d.apron, d.pearl, d.guard, ...d.toriiLamps.map(t => t.o), d.kitsune && d.kitsune.o].forEach(markDyn);
 
     // ---- material fix-ups by name
     const fix = (m) => {
@@ -223,7 +229,7 @@ export class TableView {
         if (n.startsWith('standee_')) { m.roughness = 0.5; m.emissive = new THREE.Color(1, 1, 1); m.emissiveMap = m.map; m.emissiveIntensity = 0.22; }
       }
       if (n.startsWith('acrylic')) { m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide; m.roughness = 0.05; m.envMapIntensity = 1.2; }
-      if (n.startsWith('jade_ramp_')) {
+      if (n.startsWith('jade_ramp_') || n.startsWith('amber_ramp_')) {
         m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide;
         m.forceSinglePass = true; m.roughness = 0.24; m.envMapIntensity = 0.4;
         m.clearcoat = 0.18; m.clearcoatRoughness = 0.3;
@@ -258,6 +264,7 @@ export class TableView {
       o.castShadow = true; o.receiveShadow = true;
     });
 
+    if (d.kitsune) d.kitsune.o.traverse(c => { if (c.isMesh) { c.material = c.material.clone(); d.kitsune.mat = c.material; } });
     const pf = find('playfield');
     if (pf) { pf.material = this.pfMat; pf.castShadow = false; pf.receiveShadow = true; dynSet.add(pf); }
     this.playfieldMesh = pf;
@@ -288,7 +295,7 @@ export class TableView {
       const mesh = new THREE.Mesh(geo, m);
       const n = m.name || '';
       mesh.castShadow = !m.transparent && !n.startsWith('card_') && n !== 'backglass';
-      mesh.receiveShadow = !n.startsWith('jade_ramp_');
+      mesh.receiveShadow = !n.startsWith('jade_ramp_') && !n.startsWith('amber_ramp_');
       mesh.name = 'merged_' + n;
       if (m.transparent) mesh.renderOrder = 5;
       merged.add(mesh);
@@ -410,6 +417,17 @@ export class TableView {
       const t = w.standups[i], k = t.anim * t.anim * 0.004;
       o.position.set(o.userData.p0.x - t.n[0] * k, o.userData.p0.y, o.userData.p0.z + t.n[1] * k);
     });
+    // the guard post rises out of its socket (table z -> three y); fully sunk it is hidden
+    if (d.guard && w.popups && w.popups[0]) {
+      const a = w.popups[0].anim;
+      d.guard.position.y = d.guard.userData.p0.y + (a - 1) * 0.031;
+      d.guard.visible = a > 0.02;
+    }
+    for (const t of d.toriiLamps || []) {
+      const v = t.lamp ? this.lamps.value[t.lamp.id] : 0;
+      if (t.mat) t.mat.emissiveIntensity = 0.15 + v * 3.0;
+    }
+    if (d.kitsune && d.kitsune.mat && d.kitsune.lamp) d.kitsune.mat.emissiveIntensity = 0.2 + this.lamps.value[d.kitsune.lamp.id] * 0.35;
     if (d.pearlMat) {
       const l = this.lamps.byName.get('pearl');
       const v = l ? this.lamps.value[l.id] : 0;

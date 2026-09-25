@@ -61,7 +61,7 @@ export class Display {
   // per-table look: dot colour, the faint unlit dots, attract texts
   setTheme(def) {
     this.color = def.dmd; this.unlitColor = def.dmdUnlit; this.attractDef = def.attract;
-    this.hudNames = def.id === 'ryujin' ? { tsukimi: 'RYUGU', frenzy: 'UZUMAKI' } : { tsukimi: 'TSUKIMI', frenzy: 'FRENZY' };
+    this.hudNames = def.hudNames || (def.id === 'ryujin' ? { tsukimi: 'RYUGU', frenzy: 'UZUMAKI' } : { tsukimi: 'TSUKIMI', frenzy: 'FRENZY' });
     this._buildMask(); this.shown.fill(-1);
   }
   _buildMask() {
@@ -216,6 +216,38 @@ export class Display {
         this.px(hx + 2, 14, 0); this.px(hx + 3, 12, 1); this.px(hx + 4, 11, 1);
         break;
       }
+      case 'lanterns': {
+        // a row of paper lanterns swaying, lighting one after another
+        for (let i = 0; i < 6; i++) {
+          const x = 8 + i * 22.5, y = 6 + Math.sin(t * 3 + i) * 1.2, lit = Math.floor(t * 6) % 6 >= i ? 1 : 0.33;
+          for (let yy = -3; yy <= 3; yy++) for (let xx = -2; xx <= 2; xx++) if (Math.abs(xx) + Math.abs(yy) * 0.6 < 3.2) this.px(x + xx, y + yy, lit);
+          this.px(x, y - 5, 0.33); this.px(x, y - 4, 0.33);
+        }
+        break;
+      }
+      case 'fox': {
+        // a fox bounding across the display, tail streaming behind
+        const x = ((t * 90) % 190) - 30, y = 20 - Math.abs(Math.sin(t * 7)) * 8;
+        for (let k = 0; k < 12; k++) this.px(x - k, y + 1 + Math.sin(k * 0.5 + t * 9) * 1.5, k < 3 ? 1 : 0.5);
+        for (let yy = -2; yy <= 2; yy++) for (let xx = 0; xx < 7; xx++) this.px(x + xx, y + yy, 0.8);
+        this.px(x + 7, y - 3, 1); this.px(x + 8, y - 4, 1); this.px(x + 5, y - 3, 1); this.px(x + 6, y - 4, 1);
+        this.px(x + 1, y + 3, 0.66); this.px(x + 5, y + 3, 0.66);
+        break;
+      }
+      case 'torii': {
+        // gates rushing past in perspective
+        for (let g = 0; g < 4; g++) {
+          const z = ((t * 1.5 + g / 4) % 1), s = 4 + z * 18, cx = 64;
+          const lv = 0.25 + z * 0.75;
+          for (let x = -s; x <= s; x++) { this.px(cx + x, 16 - s * 0.7, lv); }
+          for (let y = -s * 0.7; y <= s * 0.9; y++) { this.px(cx - s * 0.7, 16 + y, lv); this.px(cx + s * 0.7, 16 + y, lv); }
+        }
+        break;
+      }
+      case 'rice': {
+        for (let i = 0; i < 9; i++) { const x = 6 + i * 14.5, sw = Math.sin(t * 4 + i) * 2; for (let y = 0; y < 12; y++) this.px(x + sw * y / 12, 31 - y, 0.4); this.px(x + sw, 18, 0.9); this.px(x + sw + 1, 19, 0.9); }
+        break;
+      }
       case 'lanes': {
         // three lamps lighting in sequence at the far edges
         for (let i = 0; i < 3; i++) { const on = t > i * 0.15; this.circle(4, 6 + i * 10, 2, on ? 0.8 : 0.2, true); this.circle(123, 6 + i * 10, 2, on ? 0.8 : 0.2, true); }
@@ -244,7 +276,7 @@ export class Display {
     else if (h.mb) right = 'MULTIBALL';
     else if (h.tsukimi > 0) right = `${hn.tsukimi} ${Math.ceil(h.tsukimi)}`;
     else if (h.frenzy > 0) right = `${hn.frenzy} ${Math.ceil(h.frenzy)}`;
-    else if (h.lockLit) right = 'LOCK LIT';
+    else if (h.lockLit) right = hn.lock || 'LOCK LIT';
     this.text5(left, 1, 25, 0.66);
     this.text5(right, 127, 25, 0.66, 'right');
     // moon phase icon (top-right): the lit part grows from the right as the moon fills
@@ -272,7 +304,7 @@ export class Display {
         for (let i = 0; i < 2; i++) { const e = hs[(k - 1) * 2 + 1 + i]; if (e) this.text5(`${(k - 1) * 2 + 2 + i}. ${e.name} ${e.score.toLocaleString('en-US')}`, 64, 4 + i * 13, 0.8, 'center'); }
       }
     } else {
-      this.anim(A.anim === 'pearl' ? 'dragon' : 'koi', t);
+      this.anim(A.anim2 || (A.anim === 'pearl' ? 'dragon' : 'koi'), t);
       this.textBig(this.strings.pressStart || 'PRESS START', 64, 15, 13, Math.floor(this.t * 2) % 2 ? 1 : 0.66, 118);
     }
   }

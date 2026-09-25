@@ -187,6 +187,8 @@ export class World {
         this.segs.push({ ax: a[0] + nx * off, ay: a[1] + ny * off, bx: b[0] + nx * off, by: b[1] + ny * off, r: s.rubberR, mat: 'rubber', kind, id: s.id, enabled: true, nx, ny });
       }
     }
+    // pop-up posts: solid only while raised (world.popups[i].up)
+    this.popups = (L.popups || []).map(pp => { const c = { x: pp.p[0], y: pp.p[1], r: pp.r, mat: 'post', kind: 'post', id: pp.id, enabled: false }; this.circles.push(c); return Object.assign(c, { up: false, anim: 0 }); });
     for (const b of L.bumpers) this.circles.push({ x: b.p[0], y: b.p[1], r: b.r, mat: 'bumper', kind: 'bumper', id: b.id });
     // stand-up targets: fixed, springy faces that register a hit (Ryūjin)
     (L.standups || []).forEach((t, i) => {
@@ -336,6 +338,12 @@ export class World {
     for (const s of this.slingState) { s.cool -= dt; s.anim = Math.max(0, s.anim - dt * 14); }
     for (const d of this.drops) d.anim += ((d.up ? 0 : 1) - d.anim) * Math.min(1, dt * 30);
     for (const t of this.standups) { t.cool -= dt; t.anim = Math.max(0, t.anim - dt * 9); }
+    for (const pp of this.popups) {
+      pp.anim += ((pp.up ? 1 : 0) - pp.anim) * Math.min(1, dt * 10);
+      // it only turns solid once fully up, and never under a ball
+      if (pp.up && !pp.enabled && pp.anim > 0.9 && !this.balls.some(b => Math.hypot(b.x - pp.x, b.y - pp.y) < pp.r + this.r)) pp.enabled = true;
+      if (!pp.up) pp.enabled = false;
+    }
     const tt = this.turntable;
     tt.omega += (tt.target - tt.omega) * Math.min(1, dt * 1.5);
     tt.angle += tt.omega * dt;
@@ -415,7 +423,7 @@ export class World {
     const cell = this.cellAt(b.x, b.y);
     if (cell) {
       for (const s of cell.segs) if (s.enabled) this._collideSeg(b, s);
-      for (const c of cell.circles) this._collideCircle(b, c);
+      for (const c of cell.circles) if (c.enabled !== false) this._collideCircle(b, c);
     }
     for (const f of this.flippers) this._collideFlipper(b, f, dt);
     this._collidePlunger(b);
@@ -554,7 +562,7 @@ export class World {
     const cx = b.x - nx * r - f.pivot[0], cy = b.y - ny * r - f.pivot[1];
     const svx = -f.omega * cy, svy = f.omega * cx;
     const vin = this._impulse(b, nx, ny, svx, svy, 'flipper');
-    if (vin > 0.08) this.emit('flipperHit', { side: f.side, speed: vin, ball: b, moving: Math.abs(f.omega) > 1 });
+    if (vin > 0.08) this.emit('flipperHit', { side: f.side, id: f.id, speed: vin, ball: b, moving: Math.abs(f.omega) > 1 });
     b.onFlipperTime = this.time;
   }
 
@@ -634,6 +642,7 @@ export class World {
     // saucer & scoop capture
     for (const key of HOLES) {
       const h = L[key];
+      if (!h) continue;
       const dx = b.x - h.p[0], dy = b.y - h.p[1];
       const d = Math.hypot(dx, dy);
       const spd = Math.hypot(b.vx, b.vy);
@@ -678,7 +687,13 @@ export class World {
     a -= Math.sign(b.u) * fr;
     a -= Math.sign(b.u) * 0.02 * b.u * b.u;
     b.u += a * dt;
+    const s0 = b.s;
     b.s += b.u * dt;
+    const gates = b.pathId === 'ramp' && this.L.ramp.gates;
+    if (gates && b.u > 0) for (let i = 0; i < gates.length; i++) {
+      const gs = gates[i] * path.length;
+      if (s0 < gs && b.s >= gs) this.emit('rampGate', { idx: i, ball: b });
+    }
     b.maxS = Math.max(b.maxS, b.s);
     // banking: lateral offset from centripetal acceleration
     const kap = path.curvature(b.s);
@@ -707,7 +722,8 @@ export class World {
       b.mode = 'field';
       b.x = q[0]; b.y = q[1]; b.z = Math.max(0, q[2] - 0.004);
       const h = Math.hypot(Te[0], Te[1]) || 1;
-      const u = Math.max(b.u, this.L.ramp.exitSpeedMin);
+      // a ramp that ends in a hole (Inari's shrine) sets the ball down gently enough to be caught
+      const u = Math.min(Math.max(b.u, this.L.ramp.exitSpeedMin), this.L.ramp.exitSpeedMax ?? Infinity);
       b.vx = Te[0] / h * u; b.vy = Te[1] / h * u; b.vz = -0.05;
       this.emit('pathDone', { id: b.pathId, ball: b });
     }
@@ -727,13 +743,13 @@ export class World {
   _release(b) {
     const key = b.capture.key;
     const h = this.L[key];
-    if (key === 'saucer') {
+    if (key === 'saucer' || h.eject) {
       b.mode = 'field'; b.z = 0.0;
       b.x = h.p[0]; b.y = h.p[1];
-      const j = (Math.random() - 0.5) * 0.08;
+      const j = (Math.random() - 0.5) * (h.ejectJitter ?? 0.08);
       b.vx = (h.eject[0] + j) * h.ejectSpeed; b.vy = (h.eject[1] + j) * h.ejectSpeed; b.vz = 0.25;
-      b.ignoreHole = 'saucer'; b.ignoreUntil = this.time + 0.6;
-      this.emit('saucerEject', { ball: b });
+      b.ignoreHole = key; b.ignoreUntil = this.time + 0.6;
+      this.emit(key === 'saucer' ? 'saucerEject' : 'scoopEject', { ball: b });
     } else {
       // VUK into the wire habitrail
       this.putOnPath(b, this.vukPath, 'vuk', 0.0, 2.35);
