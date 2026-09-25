@@ -6,7 +6,7 @@ export const CAMERA_MODES = [
   { id: 'player', name: 'Player', pos: [0, -0.35, 0.74], look: [0, 0.435, 0], fov: 40, follow: 0.10 },
   { id: 'high', name: 'Overhead', pos: [0, 0.16, 1.18], look: [0, 0.47, 0], fov: 40, follow: 0.0 },
   { id: 'follow', name: 'Follow', pos: [0, -0.22, 0.42], look: [0, 0.4, 0], fov: 46, follow: 0.55 },
-  { id: 'low', name: 'Cabinet', pos: [0, -0.50, 0.44], look: [0, 0.46, 0.02], fov: 38, follow: 0.05 },
+  { id: 'low', name: 'Cabinet', pos: [0, -0.47, 0.52], look: [0, 0.45, 0.02], fov: 38, follow: 0.05 },
 ];
 
 export class CameraRig {
@@ -35,7 +35,8 @@ export class CameraRig {
     const active = balls.filter(b => b.mode !== 'gone');
     if (active.length) {
       const b = active.reduce((a, c) => (c.y < a.y ? c : a));
-      target = 0.42 + (b.y - 0.42) * m.follow;
+      // a ball waiting in the shooter lane must not drag the camera down onto the cabinet front
+      target = 0.42 + (Math.max(0.3, b.y) - 0.42) * m.follow;
     }
     this.focusY = damp(this.focusY, target, 2.2, dt);
     let px = m.pos[0], py = m.pos[1] + (this.focusY - 0.42) * 0.9, pz = m.pos[2];

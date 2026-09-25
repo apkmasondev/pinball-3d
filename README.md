@@ -71,6 +71,7 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 - **Three.js + Vite**: renderowanie PBR, bloom, dynamiczne odbicia w kulce, inserty zapalane shaderem dokładnie w kształcie namalowanych lamp.
 - **Własny silnik fizyki pinballa** (`game/src/physics/world.js`): krok 2400 Hz, flippery z przekazywaniem pędu, rampy i druciane rurki jako ścieżki 3D, bramki jednokierunkowe, spinner, saucer, scoop z VUK, kickback.
 - **Stoły i obudowy** modelowane w Blenderze na podstawie plików układu (`game/src/layout.js`, `game/src/layout_ryujin.js`), wspólnych dla grafiki, fizyki i nadruku lamp. Rejestr stołów: `game/src/tables.js`.
+- **Obudowa** jak w prawdziwych automatach: płaskie szyny boczne wchodzące pod głowicę, odlewana listwa blokująca z zaokrąglonymi końcami, okucia zawiasów, osłony narożników; cztery kamery (gracz, z góry, śledząca, automat) dopasowują kadr do proporcji ekranu.
 - **Nadruk pola** każdego stołu to jedna gotowa tekstura: ilustracja tła, wkładki lamp i napisy są składane przed publikacją, więc gra ładuje jeden obraz zamiast kilku warstw.
 - **Muzyka adaptacyjna**: sekcje utworów zapętlane na granicach fraz, przejścia czekają na najbliższy takt (`game/src/audio/music.json`).
 

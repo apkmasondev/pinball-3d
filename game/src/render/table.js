@@ -320,7 +320,8 @@ export class TableView {
     this.root.add(pl); this.plungerLight = pl;
     // (placed nearly overhead so its clearcoat glint lands off the playfield from the player's view)
     const moon = new THREE.DirectionalLight(LT.moon ?? 0x9fb4ff, LT.moonIntensity ?? 0.45);
-    moon.position.copy(tv(-0.12, 0.62, 1.5)); moon.target.position.copy(tv(0, 0.32, 0));
+    // low from the left rear: a cool raking light whose mirror glint misses every camera, the overhead one included
+    moon.position.copy(tv(-1.1, 0.9, 0.75)); moon.target.position.copy(tv(0, 0.4, 0));
     this.root.add(moon, moon.target);
     this.moonLight = moon;
   }
