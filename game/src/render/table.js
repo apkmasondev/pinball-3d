@@ -295,12 +295,12 @@ export class TableView {
   // playfield glass: adds only a faint reflection of the room (additive, unlit -> no GI glints)
   addGlass(envMap) {
     const L = this.L;
-    const len = L.TABLE_L + 0.14;
+    const len = L.TABLE_L + 0.05;            // cabinet front (-0.04) to just short of the back wall
     const geo = new THREE.PlaneGeometry(L.TABLE_W, len);
     const mat = new THREE.MeshBasicMaterial({ color: 0x000000, envMap, reflectivity: 0.09, combine: THREE.AddOperation, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     const g = new THREE.Mesh(geo, mat);
     g.rotation.x = -Math.PI / 2;
-    g.position.copy(tv(0, len / 2 - 0.13, 0.108));
+    g.position.copy(tv(0, len / 2 - 0.04, 0.108));
     g.renderOrder = 10; g.name = 'glass';
     this.root.add(g);
     this.glass = g;

@@ -6,6 +6,27 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { nightEnvironment } from './env.js';
 
+// Mirror-smooth lacquer and chrome turn a light into a pinpoint far brighter than a half-float target can hold
+// on some (mobile) GPUs: the Inf/NaN then gets smeared over the whole frame by the bloom. Cap direct highlights
+// on every lit material (they stay crisp, just finite)...
+THREE.ShaderChunk.lights_fragment_end += `
+  reflectedLight.directSpecular = min(reflectedLight.directSpecular, vec3(4.0));
+  #ifdef USE_CLEARCOAT
+    clearcoatSpecularDirect = min(clearcoatSpecularDirect, vec3(4.0));
+  #endif`;
+// ...and scrub whatever still overflows before it reaches the bloom.
+const SanitizeShader = {
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `
+    uniform sampler2D tDiffuse; varying vec2 vUv;
+    void main(){
+      vec4 c = texture2D(tDiffuse, vUv);
+      if (any(isnan(c.rgb)) || any(isinf(c.rgb))) c.rgb = vec3(0.0);
+      gl_FragColor = vec4(clamp(c.rgb, 0.0, 24.0), c.a);
+    }`,
+};
+
 // Final grade: vignette + subtle warm/cool split tone + film grain. Runs before OutputPass (linear HDR).
 const GradeShader = {
   uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uVignette: { value: 0.32 }, uFlash: { value: 0 }, uFlashColor: { value: new THREE.Color(1, 0.8, 0.6) } },
@@ -50,6 +71,7 @@ export class Stage {
     this.composer = new EffectComposer(renderer, rt);
     this.renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(this.renderPass);
+    this.composer.addPass(new ShaderPass(SanitizeShader));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.62, 0.42, 1.55);
     this.composer.addPass(this.bloom);
     this.grade = new ShaderPass(GradeShader);

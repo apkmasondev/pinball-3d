@@ -3,7 +3,7 @@ import { damp } from './util.js';
 
 // Camera presets are defined in table space relative to the tilted table root.
 export const CAMERA_MODES = [
-  { id: 'player', name: 'Player', pos: [0, -0.34, 0.74], look: [0, 0.445, 0], fov: 40, follow: 0.10 },
+  { id: 'player', name: 'Player', pos: [0, -0.35, 0.74], look: [0, 0.435, 0], fov: 40, follow: 0.10 },
   { id: 'high', name: 'Overhead', pos: [0, 0.16, 1.18], look: [0, 0.47, 0], fov: 40, follow: 0.0 },
   { id: 'follow', name: 'Follow', pos: [0, -0.22, 0.42], look: [0, 0.4, 0], fov: 46, follow: 0.55 },
   { id: 'low', name: 'Cabinet', pos: [0, -0.50, 0.44], look: [0, 0.46, 0.02], fov: 38, follow: 0.05 },
@@ -43,7 +43,7 @@ export class CameraRig {
     // tall screens: blend toward a steeper framing so the long table fills the height
     const pt = m.id === 'high' ? 0 : Math.min(1, Math.max(0, (1.15 - aspect) / 0.55));
     if (pt > 0) {
-      const P = [0, -0.02 + (this.focusY - 0.42) * 0.4, 1.02], Lk = [0, 0.455 + (this.focusY - 0.42) * 0.3, 0];
+      const P = [0, -0.07 + (this.focusY - 0.42) * 0.4, 1.06], Lk = [0, 0.425 + (this.focusY - 0.42) * 0.3, 0];
       px += (P[0] - px) * pt; py += (P[1] - py) * pt; pz += (P[2] - pz) * pt;
       lx += (Lk[0] - lx) * pt; ly += (Lk[1] - ly) * pt; lz += (Lk[2] - lz) * pt;
     }

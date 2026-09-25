@@ -46,7 +46,7 @@ export class ApronCards {
     this.root = root; this.meshes = [];
     // window rectangles measured on the apron art (table metres)
     // window rectangles measured on the apron art, mapped onto the apron (x -0.2735..0.2095)
-    const ax0 = -0.2735, aw = 0.2095 - ax0, top = 0.122, h = 0.125;
+    const ax0 = -0.2735, aw = 0.2095 - ax0, top = 0.112, h = 0.125;   // apron plate y -0.013..0.112
     const r = (u0, u1) => [ax0 + u0 * aw, ax0 + u1 * aw, top - 0.643 * h, top - 0.366 * h];
     this.rects = [r(0.2987, 0.4062), r(0.6044, 0.7110)];
   }
