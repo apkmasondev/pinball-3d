@@ -233,6 +233,26 @@ export class TableView {
         m.transparent = true; m.depthWrite = false; m.side = THREE.DoubleSide;
         m.forceSinglePass = true; m.roughness = 0.24; m.envMapIntensity = 0.4;
         m.clearcoat = 0.18; m.clearcoatRoughness = 0.3;
+        if (n.startsWith('amber_ramp_')) {
+          m.roughness = 0.1; m.envMapIntensity = 0.85;
+          m.clearcoat = 0.65; m.clearcoatRoughness = 0.08;
+        }
+      }
+      if (n === 'wood_cedar_inari') {
+        // Fine horizontal cedar grain on the mask-bank housing. Geometry and
+        // collision guides retain their original dimensions.
+        m.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader
+            .replace('#include <common>', '#include <common>\nvarying vec3 vCedarPosition;')
+            .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCedarPosition = position;');
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>', '#include <common>\nvarying vec3 vCedarPosition;')
+            .replace('#include <color_fragment>', `#include <color_fragment>
+              float alongGrain = dot(vCedarPosition.xz, vec2(0.7, 0.7));
+              float cedar = sin(vCedarPosition.y * 2800.0 + sin(alongGrain * 90.0) * 1.4);
+              diffuseColor.rgb *= 0.9 + 0.1 * cedar;`);
+        };
+        m.customProgramCacheKey = () => 'inari-cedar-v1';
       }
       if (['gold', 'chrome', 'gold_dark', 'steel'].includes(n)) m.envMapIntensity = 1.0;
       if (n === 'wire') m.envMapIntensity = 0.75;
