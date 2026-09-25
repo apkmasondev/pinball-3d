@@ -4,7 +4,7 @@ Trójwymiarowy pinball działający w przeglądarce, z trzema stołami do wyboru
 
 - **月見 Tsukimi — Moonlit Koi Garden**: nocny ogród na wiśniowej lace: koi, sakura, latarnie, most nad stawem i brama torii pod pełnią księżyca. Cele opadające K-O-I, wirujący dysk koi.
 - **竜神 Ryūjin — Pałac Smoczego Króla**: szafirowa posadzka pałacu z wygrawerowanym smokiem i własny, asymetryczny układ: Most Pereł wjeżdża z lewej i przechodzi łukiem nad stołem, pałac z bramą Ryūgū-jō stoi w prawym górnym rogu, wir po lewej naprawdę łapie kulkę. Perłowe muszle, cele przypływu, Perłowy Hurry-Up. Własna muzyka, paleta, obudowa i zasady.
-- **稲荷 Inari — Złoty Las Lisów**: jesienne sanktuarium lisów kitsune w bursztynowym świetle lampionów. Najbardziej odmienny układ: bez górnych torów, z trzecią łapką na lewym zboczu, rampą Senbon Torii wspinającą się pod pięcioma bramami torii prosto do chramu, który odbija kulkę na górną łapkę, trzema maskami lisa i Strażnikiem Kitsune: słupkiem, który wysuwa się między flipperami. Dziewięć Ogonów, Noc Lampionów, Żniwa. Własna muzyka („狐の回遊路”), paleta, obudowa i zasady.
+- **稲荷 Inari — Złoty Las Lisów**: jesienne sanktuarium lisów kitsune w bursztynowym świetle lampionów. Najbardziej odmienny układ: bez górnych torów, z trzecią łapką na lewym zboczu, rampą Senbon Torii wspinającą się pod pięcioma bramami torii prosto do chramu, który odbija kulkę na górną łapkę, trzema maskami lisa i Strażnikiem Kitsune: słupkiem, który wysuwa się między flipperami. Dziewięć Ogonów, Noc Lampionów, Żniwa. Własna muzyka („紅葉の狐”), paleta, obudowa i zasady.
 
 Stół wybierasz w menu **Wybierz stół**, strzałkami ← → (lub strzałkami przy logo) na ekranie tytułowym albo przesuwając palcem po ekranie tytułowym. Każdy stół ma własną tabelę rekordów i własną muzykę w grze; menu ma wspólny, spokojny motyw.
 
@@ -90,7 +90,7 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 
 - Grafiki stołu, plastików i zabawek oraz oba utwory muzyczne („月夜のピンボール”, „月庭の静けさ”) pochodzą od autora projektu.
 - Grafiki stołu Ryūjin (smok, brama pałacu, perła, latarnia, bumpery, flippery, wizualizacja) i utwór „Zen Pinball Garden” również pochodzą od autora projektu; plastiki i obudowa Ryūjin zostały z nich skomponowane.
-- Grafiki stołu Inari (jesienny las, lis o dziewięciu ogonach, brama sanktuarium, kapsle bumperów, łapki i slingshoty, lampiony, maski, ema, torii) i utwór „狐の回遊路” także pochodzą od autora projektu; nadruk pola, plastiki, cele i obudowa Inari zostały z nich skomponowane.
+- Grafiki stołu Inari (jesienny las, lis o dziewięciu ogonach, brama sanktuarium, kapsle bumperów, łapki i slingshoty, lampiony, maski, ema, torii) i utwór „紅葉の狐” także pochodzą od autora projektu; nadruk pola, plastiki, cele i obudowa Inari zostały z nich skomponowane.
 - Tła pól gry Tsukimi i Ryūjin (wiśniowa laka z koi, szafirowa posadzka ze smokiem) oraz grafiki celów Ryūjin powstały w narzędziu do generowania obrazów na zamówienie autora projektu.
 - Mechaniczne efekty dźwiękowe są wycięte z nagrań społeczności freesound („pinball full game”, „ball in hole”, „instant drain”) i uzupełnione dźwiękami syntezowanymi (koto, taiko, shakuhachi, dzwony).
 - Fonty: Marcellus, Shippori Mincho i Cormorant Garamond (SIL Open Font License) przez pakiety @fontsource.

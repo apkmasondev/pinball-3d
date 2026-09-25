@@ -23,10 +23,10 @@
   },
   "inari": {
    "file": "song_inari",
-   "samples": 5344920,
+   "samples": 8093232,
    "rate": 44100,
-   "barLen": 1.66223,
-   "barPhase": 0.3564
+   "barLen": 1.67598,
+   "barPhase": 0.2422
   }
  },
  "cues": {
@@ -103,23 +103,23 @@
   "in_main": {
    "song": "inari",
    "start": 0.0,
-   "loopStart": 20.2972,
-   "loopEnd": 113.3837,
-   "gain": 1.0
+   "loopStart": 13.65,
+   "loopEnd": 121.4471,
+   "gain": 0.92
   },
   "in_multiball": {
    "song": "inari",
-   "start": 76.82,
-   "loopStart": 58.5264,
-   "loopEnd": 105.0614,
-   "gain": 1.05
+   "start": 148.598,
+   "loopStart": 151.95,
+   "loopEnd": 178.5834,
+   "gain": 0.95
   },
   "in_lantern": {
    "song": "inari",
-   "start": 41.9121,
-   "loopStart": 41.9121,
-   "loopEnd": 68.5065,
-   "gain": 1.0
+   "start": 108.348,
+   "loopStart": 111.7,
+   "loopEnd": 131.783,
+   "gain": 0.92
   }
  }
 }
