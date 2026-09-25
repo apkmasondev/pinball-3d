@@ -65,7 +65,6 @@ export class Audio {
         this.variants.get(base).push(buf);
       } catch (e) { console.warn('audio load failed', f, e); }
     }));
-    for (const v of this.variants.values()) v.sort((a, b) => 0);
     // bonus ticks are an ascending sequence
     this.bonusTicks = Array.from({ length: 8 }, (_, i) => this.buffers.get('bonusTick_' + i)).filter(Boolean);
   }
@@ -106,6 +105,13 @@ export class Audio {
     g.cancelScheduledValues(t); g.setTargetAtTime(1 - amount, t, 0.03); g.setTargetAtTime(1, t + dur, 0.4);
   }
 
+  // music sits lower for as long as the game is paused
+  pauseDuck(on) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime, g = this.duck.gain;
+    g.cancelScheduledValues(t); g.setTargetAtTime(on ? 0.4 : 1, t, on ? 0.08 : 0.3);
+  }
+
   music(name) {
     if (!this.ready) { this.pendingMusic = name; return; }
     if (name === this.musicName) return;
@@ -117,12 +123,11 @@ export class Audio {
   updateRolling(balls, tableHalfW) {
     if (!this.ready) return;
     const c = this.ctx, t = c.currentTime;
-    const seen = new Set();
+    const stamp = this._rollStamp = (this._rollStamp || 0) + 1;
     for (const b of balls) {
-      seen.add(b.id);
       let r = this.rolls.get(b.id);
       if (!r) {
-        r = {};
+        r = { voices: {}, vol: -1, rate: -1, pan: -9 };
         for (const k of ['roll', 'wireRoll', 'rampRoll']) {
           const buf = this.buffers.get(k); if (!buf) continue;
           const src = c.createBufferSource(); src.buffer = buf; src.loop = true;
@@ -131,24 +136,31 @@ export class Audio {
           const p = c.createStereoPanner ? c.createStereoPanner() : null;
           src.connect(g); if (p) { g.connect(p); p.connect(this.sfx); } else g.connect(this.sfx);
           src.start(t + Math.random() * 0.1, Math.random() * buf.duration);
-          r[k] = { src, g, p };
+          r.voices[k] = { src, g, p };
         }
         this.rolls.set(b.id, r);
       }
+      r.stamp = stamp;
       const sp = Math.hypot(b.vx, b.vy);
       let surface = 'roll';
       if (b.mode === 'path') surface = (b.pathId === 'ramp' && b.s < b.path.length * 0.43) ? 'rampRoll' : 'wireRoll';
       const onGround = b.mode === 'field' ? b.z < 0.002 : b.mode === 'path';
       const vol = onGround ? Math.min(1, sp / 2.2) ** 1.3 * (surface === 'roll' ? 0.55 : 0.75) : 0;
-      for (const k in r) {
-        const v = k === surface ? vol : 0;
-        r[k].g.gain.setTargetAtTime(v, t, 0.04);
-        r[k].src.playbackRate.setTargetAtTime(0.55 + Math.min(1.6, sp * 0.45), t, 0.05);
-        if (r[k].p) r[k].p.pan.setTargetAtTime(Math.max(-1, Math.min(1, b.x / tableHalfW)) * 0.7, t, 0.05);
+      const rate = 0.55 + Math.min(1.6, sp * 0.45), pan = Math.max(-1, Math.min(1, b.x / tableHalfW)) * 0.7;
+      // schedule automation only on an audible change: a new event per param per frame piles up in the audio thread
+      const volCh = Math.abs(vol - r.vol) > 0.01 || surface !== r.surface, rateCh = Math.abs(rate - r.rate) > 0.01, panCh = Math.abs(pan - r.pan) > 0.02;
+      if (volCh) { r.vol = vol; r.surface = surface; }
+      if (rateCh) r.rate = rate;
+      if (panCh) r.pan = pan;
+      for (const k in r.voices) {
+        const V = r.voices[k];
+        if (volCh) V.g.gain.setTargetAtTime(k === surface ? vol : 0, t, 0.04);
+        if (rateCh) V.src.playbackRate.setTargetAtTime(rate, t, 0.05);
+        if (panCh && V.p) V.p.pan.setTargetAtTime(pan, t, 0.05);
       }
     }
-    for (const [id, r] of this.rolls) if (!seen.has(id)) {
-      for (const k in r) { r[k].g.gain.setTargetAtTime(0, t, 0.03); const s = r[k].src; setTimeout(() => { try { s.stop(); } catch (e) { } }, 300); }
+    for (const [id, r] of this.rolls) if (r.stamp !== stamp) {
+      for (const k in r.voices) { const V = r.voices[k]; V.g.gain.setTargetAtTime(0, t, 0.03); setTimeout(() => { try { V.src.stop(); } catch (e) { } }, 300); }
       this.rolls.delete(id);
     }
   }

@@ -4,7 +4,7 @@ const STR = {
     play: 'Zagraj', resume: 'Wznów', settings: 'Ustawienia', help: 'Jak grać', scores: 'Rekordy', quit: 'Menu główne', back: 'Wróć',
     subtitle: 'Moonlit Koi Garden', pressStart: 'Naciśnij Enter, aby zagrać', paused: 'Pauza', loading: 'Wschodzi księżyc…',
     lang: 'Język', camera: 'Kamera', quality: 'Grafika', balls: 'Kulki na grę', master: 'Głośność', music: 'Muzyka', sfx: 'Efekty',
-    low: 'Niska', medium: 'Średnia', high: 'Wysoka', camPlayer: 'Gracz', camHigh: 'Z góry', camFollow: 'Śledząca', camLow: 'Automat',
+    auto: 'Auto', low: 'Niska', medium: 'Średnia', high: 'Wysoka', camPlayer: 'Gracz', camHigh: 'Z góry', camFollow: 'Śledząca', camLow: 'Automat',
     controls: 'Sterowanie', rules: 'Zasady', highScores: 'Najlepsze wyniki', enterInitials: 'Nowy rekord! Wpisz inicjały', ok: 'Zapisz',
     gameOver: 'Koniec gry', finalScore: 'Wynik', tapToStart: 'Dotknij, aby zagrać', launch: 'Start',
     ctl: [
@@ -25,7 +25,7 @@ const STR = {
     play: 'Play', resume: 'Resume', settings: 'Settings', help: 'How to play', scores: 'High scores', quit: 'Main menu', back: 'Back',
     subtitle: 'Moonlit Koi Garden', pressStart: 'Press Enter to play', paused: 'Paused', loading: 'The moon is rising…',
     lang: 'Language', camera: 'Camera', quality: 'Graphics', balls: 'Balls per game', master: 'Volume', music: 'Music', sfx: 'Effects',
-    low: 'Low', medium: 'Medium', high: 'High', camPlayer: 'Player', camHigh: 'Overhead', camFollow: 'Follow', camLow: 'Cabinet',
+    auto: 'Auto', low: 'Low', medium: 'Medium', high: 'High', camPlayer: 'Player', camHigh: 'Overhead', camFollow: 'Follow', camLow: 'Cabinet',
     controls: 'Controls', rules: 'Rules', highScores: 'High scores', enterInitials: 'New high score! Enter your initials', ok: 'Save',
     gameOver: 'Game over', finalScore: 'Score', tapToStart: 'Tap to play', launch: 'Launch',
     ctl: [
@@ -43,6 +43,9 @@ const STR = {
     ],
   },
 };
+
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
 
 export class UI {
   constructor(root, settings, handlers) {
@@ -89,7 +92,7 @@ export class UI {
       <div id="initials" class="screen panel-screen"><div class="panel narrow">
         <h2 data-s="enterInitials"></h2>
         <div class="final" id="finalScore"></div>
-        <div class="letters" id="letters"><span></span><span></span><span></span></div>
+        <div class="letters" id="letters">${[0, 1, 2].map(i => `<div class="lt"><button class="arr" data-i="${i}" data-d="1" aria-label="+">▲</button><span data-i="${i}"></span><button class="arr" data-i="${i}" data-d="-1" aria-label="−">▼</button></div>`).join('')}</div>
         <nav class="menu row"><button data-a="saveInitials" data-s="ok"></button></nav>
       </div></div>
       <div id="touch" class="${this.touch ? 'on' : ''}">
@@ -106,6 +109,15 @@ export class UI {
       this.action(b.dataset.a);
     });
     root.addEventListener('mouseover', (e) => { if (e.target.closest('button[data-a]')) this.h.sound && this.h.sound('uiMove'); });
+    // initials by pointer / touch: the arrows change a letter, tapping a letter selects it
+    this.$('#letters').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-i]'); if (!el) return;
+      this.initials.pos = +el.dataset.i;
+      if (el.dataset.d) this.initialsCycle(+el.dataset.d); else this._renderInitials();
+      this.h.sound && this.h.sound('uiMove');
+    });
+    // touch screens: a tap anywhere on the title outside the menu starts a game (as the hint says)
+    this.$('#title').addEventListener('click', (e) => { if (this.touch && this.screen === 'title' && performance.now() - this.shownAt > 1200 && !e.target.closest('nav')) this.h.start(); });
     this._touch();
     this._petals();
     this.initials = { letters: ['K', 'O', 'I'], pos: 0 };
@@ -121,7 +133,7 @@ export class UI {
 
   show(name) {
     this.prev = this.screen;
-    this.screen = name;
+    this.screen = name; this.shownAt = performance.now();
     this.root.querySelectorAll('.screen').forEach(el => el.classList.remove('show'));
     const map = { title: '#title', pause: '#pause', settings: '#settings', help: '#helpScr', scores: '#scoresScr', initials: '#initials', loading: '#loading' };
     if (map[name]) this.$(map[name]).classList.add('show');
@@ -167,7 +179,7 @@ export class UI {
     this.$('#settingsBody').innerHTML = `
       <div class="row"><label>${t('lang')}</label>${seg('lang', [['pl', 'Polski'], ['en', 'English']])}</div>
       <div class="row"><label>${t('camera')}</label>${seg('camera', [['player', t('camPlayer')], ['high', t('camHigh')], ['follow', t('camFollow')], ['low', t('camLow')]])}</div>
-      <div class="row"><label>${t('quality')}</label>${seg('quality', [['low', t('low')], ['medium', t('medium')], ['high', t('high')]])}</div>
+      <div class="row"><label>${t('quality')}</label>${seg('quality', [['auto', t('auto')], ['low', t('low')], ['medium', t('medium')], ['high', t('high')]])}</div>
       <div class="row"><label>${t('balls')}</label>${seg('balls', [[3, '3'], [5, '5']])}</div>
       <div class="row"><label>${t('master')}</label>${slider('master')}</div>
       <div class="row"><label>${t('music')}</label>${slider('music')}</div>
@@ -191,15 +203,20 @@ export class UI {
   }
   _buildScores() {
     const hs = this.h.highScores ? this.h.highScores() : [];
-    this.$('#scoreList').innerHTML = hs.map((h, i) => `<li><span class="rank">${i + 1}</span><span class="nm">${h.name}</span><span class="sc">${h.score.toLocaleString('en-US')}</span></li>`).join('');
+    this.$('#scoreList').innerHTML = hs.map((h, i) => `<li><span class="rank">${i + 1}</span><span class="nm">${esc(h.name)}</span><span class="sc">${h.score.toLocaleString('en-US')}</span></li>`).join('');
   }
 
   // ---------------------------------------------------------------- initials
   startInitials(score) {
     this.$('#finalScore').textContent = score.toLocaleString('en-US');
-    this.initials = { letters: ['A', 'A', 'A'], pos: 0 };
+    // start from the initials this browser used last time
+    let last = 'AAA';
+    try { last = localStorage.getItem('tsukimi.initials') || last; } catch (e) { }
+    const letters = [...last.toUpperCase().padEnd(3).slice(0, 3)].map(c => LETTERS.includes(c) ? c : 'A');
+    this.initials = { letters, pos: 0 };
     this.show('initials');
   }
+  rememberInitials(name) { try { localStorage.setItem('tsukimi.initials', name); } catch (e) { } }
   initialsKey(e) {
     const I = this.initials;
     if (/^[a-zA-Z0-9]$/.test(e.key)) { I.letters[I.pos] = e.key.toUpperCase(); I.pos = Math.min(2, I.pos + 1); this._renderInitials(); return true; }
@@ -207,12 +224,12 @@ export class UI {
     return false;
   }
   initialsCycle(dir) {
-    const I = this.initials; const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ';
+    const I = this.initials, A = LETTERS;
     const i = A.indexOf(I.letters[I.pos]); I.letters[I.pos] = A[(i + dir + A.length) % A.length]; this._renderInitials();
   }
   initialsNext() { const I = this.initials; if (I.pos < 2) { I.pos++; this._renderInitials(); return false; } return true; }
   _renderInitials() {
-    const spans = this.$('#letters').children;
+    const spans = this.$('#letters').querySelectorAll('span');
     for (let i = 0; i < 3; i++) { spans[i].textContent = this.initials.letters[i]; spans[i].classList.toggle('cur', i === this.initials.pos); }
   }
 
@@ -220,10 +237,21 @@ export class UI {
   _touch() {
     const t = this.$('#touch');
     const press = (el, on) => { const a = el.dataset.t; if (a) this.h.press(a, on); };
+    t.addEventListener('contextmenu', (e) => e.preventDefault());   // long press must not open a menu
     t.querySelectorAll('[data-t]').forEach(el => {
-      el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add('down'); press(el, true); });
-      const up = (e) => { el.classList.remove('down'); press(el, false); };
-      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+      // several fingers may rest on one zone: it stays pressed until the last one lifts
+      const fingers = new Set();
+      el.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        try { el.setPointerCapture(e.pointerId); } catch (err) { }   // keeps the release on this zone if the finger slides off
+        fingers.add(e.pointerId);
+        if (fingers.size === 1) { el.classList.add('down'); press(el, true); }
+      });
+      const up = (e) => {
+        if (!fingers.delete(e.pointerId) || fingers.size) return;
+        el.classList.remove('down'); press(el, false);
+      };
+      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
     });
   }
 

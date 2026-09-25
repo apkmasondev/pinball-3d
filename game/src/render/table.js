@@ -34,13 +34,19 @@ export class Lamps {
     this.show = null;    // optional light show function(name, lamp, t) -> level | undefined
   }
   set(name, mode, opts = {}) { // mode: 'off' | 'on' | 'blink' | 'fastblink' | 'pulse' | 'level'
-    if (mode === 'off') { this.state.delete(name); return; }
     const cur = this.state.get(name);
+    // a running flash wins: the rules re-assert every lamp each frame, which only updates what it falls back to
+    if (cur && cur.mode === 'flash') {
+      if (mode === 'off') cur.prev = null;
+      else if (!cur.prev || cur.prev.mode !== mode || cur.prev.level !== opts.level) cur.prev = { mode, ...opts, t0: this.t };
+      return;
+    }
+    if (mode === 'off') { this.state.delete(name); return; }
     if (cur && cur.mode === mode && cur.level === opts.level) return;
     this.state.set(name, { mode, ...opts, t0: this.t });
   }
   get(name) { return this.state.get(name)?.mode || 'off'; }
-  flash(name, dur = 0.15) { this.state.set(name, { mode: 'flash', t0: this.t, dur, prev: this.state.get(name)?.mode === 'flash' ? this.state.get(name).prev : this.state.get(name) }); }
+  flash(name, dur = 0.15) { const cur = this.state.get(name); this.state.set(name, { mode: 'flash', t0: this.t, dur, prev: cur?.mode === 'flash' ? cur.prev : cur }); }
   update(dt) {
     this.t += dt;
     for (const l of this.list) {
@@ -305,6 +311,19 @@ export class TableView {
     this.root.add(g);
     this.glass = g;
     return g;
+  }
+
+  // per-level cost knobs owned by the table: key-light shadow and the glass reflection layer
+  setQuality(q) {
+    if (this.glass) this.glass.visible = q !== 'low';
+    const k = this.keyLight; if (!k) return;
+    // dropping the caster (not just the renderer's shadow pass) recompiles the materials without the stale shadow map
+    k.castShadow = q !== 'low';
+    const size = q === 'high' ? 2048 : 1024;
+    if (k.shadow.mapSize.x !== size) {
+      k.shadow.mapSize.set(size, size);
+      if (k.shadow.map) { k.shadow.map.dispose(); k.shadow.map = null; }
+    }
   }
 
   flash(which, level = 1) {

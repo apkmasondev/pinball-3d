@@ -32,6 +32,8 @@ export const DEFAULTS = {
   maxSpeed: 9.0,
 };
 
+const HOLES = ['saucer', 'scoop'];
+
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
 // Closest point on segment ab to p; returns t in [0,1]
@@ -245,7 +247,8 @@ export class World {
       else if (b.mode === 'captured') this._stepCaptured(b, dt);
     }
     this._ballBall();
-    this.balls = this.balls.filter(b => b.mode !== 'gone');
+    // 2400 steps a second: only build a new array when a ball actually left
+    for (const b of this.balls) if (b.mode === 'gone') { this.balls = this.balls.filter(q => q.mode !== 'gone'); break; }
   }
 
   _stepFlippers(dt) {
@@ -589,7 +592,7 @@ export class World {
       }
     }
     // saucer & scoop capture
-    for (const key of ['saucer', 'scoop']) {
+    for (const key of HOLES) {
       const h = L[key];
       const dx = b.x - h.p[0], dy = b.y - h.p[1];
       const d = Math.hypot(dx, dy);

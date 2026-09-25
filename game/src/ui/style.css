@@ -101,7 +101,10 @@ kbd { font-family: var(--display); font-size: 12px; letter-spacing: .06em; color
 #scoreList li:first-child .sc { color: var(--moon); text-shadow: 0 0 12px rgba(255, 220, 150, .5); }
 .final { font-family: var(--display); font-size: 34px; color: var(--moon); margin: -4px 0 16px; text-shadow: 0 0 16px rgba(255, 200, 120, .4); }
 .letters { display: flex; justify-content: center; gap: 14px; }
-.letters span { width: 58px; height: 72px; display: grid; place-items: center; font-family: var(--display); font-size: 44px; color: var(--gold-hi); border-bottom: 2px solid rgba(228, 183, 100, .35); }
+.letters .lt { display: flex; flex-direction: column; align-items: center; }
+.letters span { width: 58px; height: 72px; display: grid; place-items: center; font-family: var(--display); font-size: 44px; color: var(--gold-hi); border-bottom: 2px solid rgba(228, 183, 100, .35); cursor: pointer; }
+.letters .arr { width: 58px; height: 34px; padding: 0; font-size: 13px; color: var(--gold); background: none; border: none; cursor: pointer; opacity: .75; transition: opacity .15s, color .15s; outline: none; }
+.letters .arr:hover, .letters .arr:focus-visible { opacity: 1; color: var(--gold-hi); }
 .letters span.cur { border-color: var(--crimson-hi); animation: breathe 1s infinite; }
 
 /* ---------------------------------------------------------------- HUD / DMD */
@@ -117,18 +120,27 @@ kbd { font-family: var(--display); font-size: 12px; letter-spacing: .06em; color
 /* ---------------------------------------------------------------- flash & touch */
 #flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
 #touch { position: absolute; inset: 0; display: none; }
+/* no double-tap zoom, text selection or callout menu while hammering the flippers */
+#touch, #touch * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 #ui.in-game #touch.on { display: block; pointer-events: auto; }
 .tz { position: absolute; bottom: 0; top: 30%; width: 50%; }
 .tz.left { left: 0; } .tz.right { right: 0; }
 .tz.down { background: radial-gradient(ellipse at 50% 100%, rgba(228, 183, 100, .12), transparent 70%); }
 .tbtn { position: absolute; font-family: var(--display); letter-spacing: .15em; color: var(--gold-hi); background: rgba(20, 10, 12, .55); border: 1px solid rgba(228, 183, 100, .5); border-radius: 50%; }
-.tbtn.launch { right: 18px; bottom: 22%; width: 74px; height: 74px; font-size: 12px; }
-.tbtn.pause { right: 14px; top: 14px; width: 42px; height: 42px; font-size: 12px; border-radius: 6px; }
+.tbtn.launch { right: calc(16px + env(safe-area-inset-right)); bottom: calc(16px + env(safe-area-inset-bottom)); width: 72px; height: 72px; font-size: 12px; }
+.tbtn.pause { right: calc(14px + env(safe-area-inset-right)); top: calc(14px + env(safe-area-inset-top)); width: 42px; height: 42px; font-size: 12px; border-radius: 6px; }
 .tbtn.down { background: rgba(181, 22, 31, .6); }
 
 @media (max-aspect-ratio: 5/4) {
-  #hud { left: 50%; top: 10px; transform: translateX(-50%); }
+  #hud { left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%); }
   #dmd { width: min(560px, 90vw); }
+  /* the display spans the top: pause sits just below it (display height = width / 4, plus the frame) */
+  .tbtn.pause { top: calc(min(560px, 90vw) / 4 + 36px + env(safe-area-inset-top)); }
+}
+@media (pointer: coarse) {
+  input[type=range] { height: 26px; background: linear-gradient(rgba(228, 183, 100, .3), rgba(228, 183, 100, .3)) center / 100% 2px no-repeat; }
+  input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px; }
+  input[type=range]::-moz-range-thumb { width: 24px; height: 24px; }
 }
 @media (max-width: 700px), (max-aspect-ratio: 3/4) {
   .cols { grid-template-columns: 1fr; gap: 10px; }

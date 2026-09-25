@@ -51,7 +51,7 @@ export class ApronCards {
     this.rects = [r(0.2987, 0.4062), r(0.6044, 0.7110)];
   }
   build(lang) {
-    for (const m of this.meshes) { this.root.remove(m); m.material.map.dispose(); m.material.dispose(); }
+    for (const m of this.meshes) { this.root.remove(m); m.geometry.dispose(); m.material.map.dispose(); m.material.dispose(); }
     this.meshes = [];
     (CARDS[lang] || CARDS.en).forEach((c, i) => {
       const [x0, x1, y0, y1] = this.rects[i];

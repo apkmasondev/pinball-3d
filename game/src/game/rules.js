@@ -649,7 +649,10 @@ export class Rules {
 function loadHighScores() {
   try {
     const v = JSON.parse(localStorage.getItem('tsukimi.hiscores') || 'null');
-    if (Array.isArray(v) && v.length) return v;
+    // stored data is outside our control: keep only well-formed entries
+    const ok = Array.isArray(v) ? v.filter(h => h && typeof h.name === 'string' && Number.isFinite(h.score))
+      .map(h => ({ name: h.name.slice(0, 3), score: h.score, date: h.date })).sort((a, b) => b.score - a.score).slice(0, 5) : [];
+    if (ok.length) return ok;
   } catch (e) { }
   return [
     { name: 'KOI', score: 5000000 }, { name: 'MOO', score: 3000000 }, { name: 'SAK', score: 2000000 },

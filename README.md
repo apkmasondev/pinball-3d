@@ -32,11 +32,13 @@ Repozytorium zawiera workflow `.github/workflows/deploy.yml`, który buduje grę
 |---|---|---|---|
 | Lewy flipper | Lewy Shift · Z · ← | LB / LT | lewa połowa ekranu |
 | Prawy flipper | Prawy Shift · / · → | RB / RT | prawa połowa ekranu |
-| Wyrzutnia (przytrzymaj i puść) | Spacja · Enter · ↓ | A | przycisk „Start” |
+| Wyrzutnia (przytrzymaj i puść) | Spacja · Enter · ↓ | A | przycisk „Start” (prawy dolny róg) |
 | Szturchnięcie stołu | X · . · ↑ | lewa gałka | — |
 | Zmiana kamery | C | Y | — |
 | Pauza | Esc · P | Select | ❚❚ |
 | Wycisz | M | — | — |
+
+Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicjały rekordu ustawia się strzałkami nad i pod literami. Grafika domyślnie działa w trybie **Auto**: telefony i tablety startują w jakości średniej, a przy utrzymującym się spadku płynności gra sama obniża jakość (Ustawienia → Grafika).
 
 ## Zasady
 

@@ -48,6 +48,13 @@ const GradeShader = {
     }`,
 };
 
+// phones and tablets start one step down: the retina pixel count costs far more than it shows
+export function autoQuality() {
+  const touch = matchMedia('(pointer: coarse)').matches;
+  const small = Math.min(screen.width, screen.height) < 820;
+  return touch || small ? 'medium' : 'high';
+}
+
 export class Stage {
   constructor(canvas) {
     this.canvas = canvas;
@@ -82,7 +89,9 @@ export class Stage {
     if (window.ResizeObserver) new ResizeObserver(() => this.resize()).observe(canvas);
     this.resize();
   }
+  // 'auto' picks a level for the device; the game may lower autoLevel later if frames stay slow
   setQuality(q) {
+    if (q === 'auto') q = this.autoLevel ||= autoQuality();
     this.quality = q;
     const pr = q === 'low' ? 1 : Math.min(window.devicePixelRatio, q === 'high' ? 2 : 1.5);
     this.renderer.setPixelRatio(pr);
@@ -95,8 +104,12 @@ export class Stage {
     // a minimised or hidden window reports 0x0: keep the last valid size instead of zero-sized targets
     if (w < 2 || h < 2) { this.zeroSize = true; return; }
     this.zeroSize = false;
+    // window resize and the ResizeObserver both land here: reallocate the render targets only on a real change
+    const pr = this.renderer.getPixelRatio(), key = `${w}x${h}@${pr}`;
+    if (key === this._sizeKey) return;
+    this._sizeKey = key;
     this.renderer.setSize(w, h, false);
-    this.composer.setPixelRatio(this.renderer.getPixelRatio());
+    this.composer.setPixelRatio(pr);
     this.composer.setSize(w, h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();

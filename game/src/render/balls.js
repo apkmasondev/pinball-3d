@@ -39,15 +39,15 @@ export class BallsView {
     this.shadowTex = new THREE.CanvasTexture(c);
     this.shadowMat = new THREE.MeshBasicMaterial({ map: this.shadowTex, transparent: true, depthWrite: false, opacity: 0.8 });
     this.shadowGeo = new THREE.PlaneGeometry(radius * 3.2, radius * 3.2).rotateX(-Math.PI / 2);
-    this.frame = 0;
+    this.frame = 0; this._stamp = 0;
+    this.every = 2;          // refresh the reflection every n-th frame (set by the quality level)
     this._q = new THREE.Quaternion();
     this._qt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
     this._wp = new THREE.Vector3();
   }
   sync(balls, dt) {
-    const seen = new Set();
+    const stamp = ++this._stamp;
     for (const b of balls) {
-      seen.add(b.id);
       let e = this.meshes.get(b.id);
       if (!e) {
         const mesh = new THREE.Mesh(this.geo, this.mat); mesh.castShadow = true;
@@ -56,6 +56,7 @@ export class BallsView {
         e = { mesh, sh };
         this.meshes.set(b.id, e);
       }
+      e.stamp = stamp;
       // a draining ball rolls over the edge of the opening in front of the apron, drops onto the trough floor
       // and rolls away under the apron (the physics keeps it on the playfield plane; this is its height)
       let sink = 0;
@@ -77,7 +78,7 @@ export class BallsView {
       e.sh.scale.set(s, 1, s);
       e.sh.material.opacity = onField ? 0.8 / s : 0.35;
     }
-    for (const [id, e] of this.meshes) if (!seen.has(id)) { this.root.remove(e.mesh, e.sh); e.sh.material.dispose(); this.meshes.delete(id); }
+    for (const [id, e] of this.meshes) if (e.stamp !== stamp) { this.root.remove(e.mesh, e.sh); e.sh.material.dispose(); this.meshes.delete(id); }
   }
   // how far below the playfield plane the ball centre sits, at lip-space position (x, s = height above the lip)
   _drop(x, s) {
@@ -90,9 +91,9 @@ export class BallsView {
     return Math.min(r + (u - r) * 1.4, 0.012 + 0.55 * u);  // falling, then resting on the sloped floor (build_table.py trough_floor_z)
   }
   updateReflection(renderer, scene) {
-    // refresh the cube map every other frame at the first ball's position
+    // refresh the cube map every few frames at the first ball's position
     this.frame++;
-    if (this.frame % 2) return;
+    if (this.frame % this.every) return;
     const first = this.meshes.values().next().value;
     if (!first) return;
     first.mesh.getWorldPosition(this._wp);
@@ -102,7 +103,11 @@ export class BallsView {
     // soft night environment instead (moon panel, backbox glow), as a real ball mirrors the arcade around it
     const bg = scene.background, bgI = scene.backgroundIntensity, bgB = scene.backgroundBlurriness;
     scene.background = scene.environment; scene.backgroundIntensity = 2.4; scene.backgroundBlurriness = 0.15;
+    // the six faces reuse this frame's shadow map instead of re-rendering it for every face
+    const shadowAuto = renderer.shadowMap.autoUpdate;
+    renderer.shadowMap.autoUpdate = false;
     this.cubeCam.update(renderer, scene);
+    renderer.shadowMap.autoUpdate = shadowAuto;
     scene.background = bg; scene.backgroundIntensity = bgI; scene.backgroundBlurriness = bgB;
     this.pmrem.fromCubemap(this.cubeRT.texture, this.pmremRT);
     renderer.setRenderTarget(null);

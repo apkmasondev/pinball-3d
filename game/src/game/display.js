@@ -30,6 +30,8 @@ for (const k in F5) GLYPH[k] = F5[k].split(',').map(r => [...r].map(c => c === '
 export class Display {
   constructor() {
     this.buf = new Float32Array(W * H);
+    this.shown = new Float32Array(W * H).fill(-1);   // what the canvas currently shows
+    this.dirty = false;
     this.queue = [];
     this.cur = null;
     this.popText = null; this.popT = 0;
@@ -230,8 +232,10 @@ export class Display {
     }
   }
 
-  update(dt) {
+  // advances the scenes; redraws the dot canvas only when it is on screen and a dot changed (sets this.dirty)
+  update(dt, visible = true) {
     this.t += dt;
+    this.dirty = false;
     this.clear(0);
     let s = this.cur;
     if (s) {
@@ -271,7 +275,14 @@ export class Display {
         this.text5(this.popText, 64, 25, 1, 'center');
       }
     }
+    if (!visible) return;
+    const buf = this.buf, shown = this.shown;
+    let same = true;
+    for (let i = 0; i < buf.length; i++) if (buf[i] !== shown[i]) { same = false; break; }
+    if (same) return;
+    shown.set(buf);
     this._render();
+    this.dirty = true;
   }
 
   _render() {

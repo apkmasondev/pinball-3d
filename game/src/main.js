@@ -14,18 +14,16 @@ import { Bot } from './game/bot.js';
 import { ApronCards } from './render/cards.js';
 
 // ------------------------------------------------------------------ settings
-const DEFAULTS = { lang: (navigator.language || 'pl').startsWith('pl') ? 'pl' : 'en', camera: 'player', quality: 'high', balls: 3, master: 0.85, music: 0.65, sfx: 0.9, mute: false };
+const DEFAULTS = { lang: (navigator.language || 'pl').startsWith('pl') ? 'pl' : 'en', camera: 'player', quality: 'auto', balls: 3, master: 0.85, music: 0.65, sfx: 0.9, mute: false };
 const settings = (() => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('tsukimi.settings') || '{}') }; } catch (e) { return { ...DEFAULTS }; } })();
 const saveSettings = () => { try { localStorage.setItem('tsukimi.settings', JSON.stringify(settings)); } catch (e) { } };
 
 const layout = buildLayout();
 const world = new World(layout);
-const stage = new Stage(document.getElementById('gl'));
-const table = new TableView(layout, world);
 const input = new Input();
 const display = new Display();
 const audio = new Audio(settings);
-let rules, rig, balls, ui, bot, cards;
+let stage, table, rules, rig, balls, ui, bot, cards;
 let mode = 'loading';          // loading | title | game | pause | initials
 let paused = false;
 
@@ -35,7 +33,7 @@ const panOf = (b) => b ? Math.max(-1, Math.min(1, b.x / halfW)) * 0.8 : 0;
 // ------------------------------------------------------------------ effects
 const fx = {
   flashV: 0, flashColor: new THREE.Color(1, 0.8, 0.6), giLevel: 1, giTarget: 1, show: null, showUntil: 0, tilted: false,
-  flash(s, color = 0xffd0a0) { this.flashV = Math.max(this.flashV, s); this.flashColor.set(color); ui && ui.flash(s, '#' + new THREE.Color(color).getHexString()); table.flash('both', Math.min(1, 0.5 + s * 0.5)); },
+  flash(s, color = 0xffd0a0) { this.flashV = Math.max(this.flashV, s); this.flashColor.set(color); ui && ui.flash(s, '#' + this.flashColor.getHexString()); table.flash('both', Math.min(1, 0.5 + s * 0.5)); },
   kick(a) { rig && rig.kick(a); },
   lightShow(name, dur) { this.show = name; this.showUntil = performance.now() / 1000 + dur; },
   tilt(on) { this.tilted = on; },
@@ -72,6 +70,16 @@ async function boot() {
   });
   ui.show('loading');
   ui.setLoading(0.05);
+  const canvas = document.getElementById('gl');
+  try { stage = new Stage(canvas); } catch (e) {
+    console.error(e);
+    ui.setLoading(0, settings.lang === 'pl' ? 'Ta przeglądarka nie obsługuje grafiki WebGL 2' : 'This browser does not support WebGL 2 graphics');
+    return;
+  }
+  table = new TableView(layout, world);
+  // mobile browsers may drop the GPU context in the background; a fresh start is the only clean recovery
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); if (mode === 'game') setPaused(true); });
+  canvas.addEventListener('webglcontextrestored', () => location.reload());
   display.lang = settings.lang;
   document.fonts && document.fonts.load('20px "Marcellus"').then(() => display.textCache.clear()).catch(() => { });
 
@@ -83,8 +91,8 @@ async function boot() {
   balls = new BallsView(stage, table.root, layout.BALL_R, layout.drainHoles);
   rig = new CameraRig(stage.camera, table.root);
   rig.setMode(settings.camera);
-  stage.setQuality(settings.quality);
   table.addGlass(stage.scene.environment);
+  applyQuality();
   // arcade floor with a soft pool of light under the machine
   {
     const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -97,7 +105,6 @@ async function boot() {
     floor.rotation.x = -Math.PI / 2; floor.position.set(0, -0.88, -0.4); floor.receiveShadow = true;
     stage.scene.add(floor);
   }
-  table.glass.visible = settings.quality !== 'low';
 
   cards = new ApronCards(table.root);
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => cards.build(settings.lang));
@@ -112,7 +119,7 @@ async function boot() {
   applyStrings();
   bindInput();
   bot = new Bot(world, layout, input);
-  if (import.meta.env.DEV) window.__game = { world, table, stage, rig, rules, audio, display, ui, layout, fx, balls, bot };
+  if (import.meta.env.DEV) window.__game = { world, table, stage, rig, rules, audio, display, ui, layout, fx, balls, bot, input, settings };
   await Promise.race([audioP, new Promise(r => setTimeout(r, 4000))]);
   ui.setLoading(1);
   setTimeout(() => toTitle(), 250);
@@ -125,6 +132,7 @@ async function boot() {
     requestAnimationFrame(frame);
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     input.pollGamepads();
+    watchPerf(dt);
     if (!paused) {
       bot.update(dt);
       demoTick(dt);
@@ -143,16 +151,16 @@ async function boot() {
     table.setGI(fx.giLevel);
     table.update(dt);
     balls.sync(world.balls, dt);
-    audio.updateRolling(mode === 'title' ? [] : world.balls, halfW);
+    audio.updateRolling(mode === 'title' || paused ? [] : world.balls, halfW);
     rig.viewW = innerWidth; rig.viewH = innerHeight;
     rig.hudPx = (mode === 'game' || mode === 'pause') && innerWidth / innerHeight < 1.25 ? hudBottom() : 0;
     rig.update(dt, world.balls, stage.camera.aspect, mode === 'title' ? 1 : 0);
     balls.updateReflection(stage.renderer, stage.scene);
     // display
     if (mode === 'game' || mode === 'pause') { display.mode = rules.state === 'initials' ? 'initials' : 'game'; display.hud = rules.hud(); }
-    display.update(dt);
-    hudCtx.clearRect(0, 0, ui.dmdCanvas.width, ui.dmdCanvas.height);
-    hudCtx.drawImage(display.canvas, 0, 0);
+    // the dot display is only on screen during play; it redraws only when a dot changes
+    display.update(dt, ui.screen === 'game');
+    if (display.dirty) hudCtx.drawImage(display.canvas, 0, 0);
     stage.render(dt, tnow);
   };
   requestAnimationFrame(frame);
@@ -163,6 +171,26 @@ function hudBottom() {
   const now = performance.now();
   if (now - _hudT > 500) { _hudT = now; const el = document.getElementById('hud'); _hudB = el ? el.getBoundingClientRect().bottom + 4 : 0; }
   return _hudB;
+}
+
+function applyQuality() {
+  stage.setQuality(settings.quality);
+  const q = stage.quality;
+  table.setQuality(q);
+  balls.every = q === 'high' ? 2 : q === 'medium' ? 3 : 6;
+}
+
+// 'auto' quality steps down once frames stay slow for a few seconds (a 30 Hz power-saving cap is not slow)
+let frameAvg = 1 / 60, slowT = 0;
+function watchPerf(dt) {
+  if (settings.quality !== 'auto' || paused || (mode !== 'game' && mode !== 'title') || stage.quality === 'low') { slowT = 0; return; }
+  frameAvg += (dt - frameAvg) * 0.05;
+  slowT = frameAvg > 1 / 28 ? slowT + dt : 0;
+  if (slowT > 4) {
+    slowT = 0; frameAvg = 1 / 60;
+    stage.autoLevel = stage.quality === 'high' ? 'medium' : 'low';
+    applyQuality();
+  }
 }
 
 function applyStrings() {
@@ -176,7 +204,7 @@ function applySetting(k, v) {
   settings[k] = v; saveSettings();
   if (k === 'lang') { applyStrings(); cards && cards.build(v); }
   if (k === 'camera') rig.setMode(v);
-  if (k === 'quality') { stage.setQuality(v); if (table.glass) table.glass.visible = v !== 'low'; }
+  if (k === 'quality') { if (v === 'auto') stage.autoLevel = null; applyQuality(); }
   if (['master', 'music', 'sfx', 'mute'].includes(k)) audio.applyVolumes();
 }
 
@@ -186,6 +214,7 @@ function toTitle() {
   display.mode = 'attract'; display.hiscores = rules.highScores; display.clearQueue();
   for (const b of [...world.balls]) world.removeBall(b);
   fx.tilted = false; world.tiltDisabled = false; fx.giTarget = 1;
+  audio.pauseDuck(false);
   world.turntable.target = 0.6;
   ui.show('title');
   audio.music('attract');
@@ -213,13 +242,15 @@ function setPaused(p) {
   if (mode !== 'game' && mode !== 'pause') return;
   paused = p; mode = p ? 'pause' : 'game';
   ui.show(p ? 'pause' : 'game');
-  if (p) { world.setFlipper('L', false); world.setFlipper('R', false); world.pullPlunger(false); audio.duckMusic(0.6, 0.1); }
+  if (p) { world.setFlipper('L', false); world.setFlipper('R', false); world.pullPlunger(false); }
+  audio.pauseDuck(p);
 }
 function quitToTitle() {
   rules.abort();
   toTitle();
 }
 function submitInitials(name) {
+  ui.rememberInitials(name);
   rules.submitInitials(name);
   audio.play('uiSelect');
 }
@@ -260,15 +291,17 @@ function bindInput() {
   input.on('camera', (on) => { if (on && (mode === 'game' || mode === 'title')) { const m = rig.cycle(); settings.camera = m.id; saveSettings(); } });
   input.on('pause', (on) => {
     if (!on) return;
-    if (mode === 'game') setPaused(true);
+    // a sub-screen (settings / help / scores) closes first, also when it was opened from the pause menu
+    if (['settings', 'help', 'scores'].includes(ui.screen)) ui.action('back');
+    else if (mode === 'game') setPaused(true);
     else if (mode === 'pause') setPaused(false);
-    else if (['settings', 'help', 'scores'].includes(ui.screen)) ui.action('back');
   });
-  input.on('mute', (on) => { if (on) applySetting('mute', !settings.mute); });
-  window.addEventListener('keydown', (e) => {
-    if (mode === 'initials') { if (ui.initialsKey(e)) e.preventDefault(); if (e.key === 'Enter') submitInitials(ui.initials.letters.join('')); }
-  });
-  window.addEventListener('pointerdown', () => audio.resume(), { once: false });
+  // M is a letter like any other while the player types initials
+  input.on('mute', (on) => { if (on && mode !== 'initials') applySetting('mute', !settings.mute); });
+  // typed letters fill the initials; Enter / Space / ↓ step to the next letter and save on the last one (plunger action)
+  window.addEventListener('keydown', (e) => { if (mode === 'initials' && ui.initialsKey(e)) e.preventDefault(); });
+  // browsers only let audio start from a user gesture; iOS counts touchend, not touchstart
+  for (const ev of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(ev, () => audio.resume(), { passive: true });
   document.addEventListener('visibilitychange', () => {
     // a hidden tab must be silent: pause the game and suspend all audio until the player returns
     if (document.hidden) { if (mode === 'game') setPaused(true); audio.suspend(); }
