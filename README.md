@@ -75,7 +75,7 @@ Na ekranie dotykowym grę zaczyna też dotknięcie ekranu tytułowego, a inicja�
 - **Noc Lampionów**: trzy maski lisa po prawej. Komplet daje dwa ogony i na 25 sekund zapala jeden strzał; każdy trafiony lampion przenosi go dalej. Pięć lampionów to **Święto Lampionów** (750 000+).
 - **Skok Lisa**: strzał z górnej łapki, który trafi bumpery albo sanktuarium, daje premię i ogon.
 - **Żniwa i Strażnik Kitsune**: co 20 trafień bumperów rosną żniwa (bumpery punktują więcej), a między flipperami na 20 sekund wysuwa się słupek, który zatrzymuje kulkę przed środkowym odpływem.
-- **Lisi Ogień** (Skill Shot: pierwszy trafiony bumper po wyrzucie musi być tym migającym), **kombo** i **Lisi Bieg** (lewa i prawa orbita pod rząd).
+- **Lisi Ogień** (Skill Shot: pierwszy trafiony bumper po wyrzucie musi być tym migającym; przed wyrzutem flipperami przenosisz go na inny), **kombo** i **Lisi Bieg** (lewa i prawa orbita pod rząd).
 
 ## Technologia
 

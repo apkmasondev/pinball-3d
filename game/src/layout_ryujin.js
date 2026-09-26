@@ -77,12 +77,13 @@ export function buildRyujinLayout() {
   wall('rampWallR', edges[0], 'rampside', 'plastic', 8);
   wall('rampUnderCap', [edges[0].at(-1), edges[1].at(-1)], 'hidden', 'plastic', 6);
   post('pRampL', ...edges[1][0], 10, 'rubber'); post('pRampR', ...edges[0][0], 10, 'rubber');
-  for (const i of [30, 40, 80, 90]) {
+  for (const i of [30, 40, 80, 88]) {
     const q = ramp.path[i], n = normal(ramp.path, i);
     for (const s of [-1, 1]) {
       // The outer leg at the right bend would stand inside the shooter/orbit
       // channel. Carry that bend from its inner leg and the adjoining span.
-      if (i === 90 && s === 1) continue;
+      // (The inner leg sits a full ball's width off the orbit rail: nearer, it pinned balls against it.)
+      if (i === 88 && s === 1) continue;
       const sp = { p: [q[0] + n[0] * 0.025 * s, q[1] + n[1] * 0.025 * s], h: q[2] - 0.002 };
       ramp.supports.push(sp);
       posts.push({ id: 'rampSupport' + i + '_' + s, p: sp.p, r: 0.0018, kind: 'support' });

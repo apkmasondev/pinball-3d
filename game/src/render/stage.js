@@ -93,17 +93,22 @@ export class Stage {
   setQuality(q) {
     if (q === 'auto') q = this.autoLevel ||= autoQuality();
     this.quality = q;
-    const pr = q === 'low' ? 1 : Math.min(window.devicePixelRatio, q === 'high' ? 2 : 1.5);
-    this.renderer.setPixelRatio(pr);
+    this.renderer.setPixelRatio(this._pixelRatio());
     this.renderer.shadowMap.enabled = q !== 'low';
     this.bloom.enabled = q !== 'low';
     this.resize();
+  }
+  _pixelRatio() {
+    const q = this.quality;
+    return q === 'low' ? 1 : Math.min(window.devicePixelRatio || 1, q === 'high' ? 2 : 1.5);
   }
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
     // a minimised or hidden window reports 0x0: keep the last valid size instead of zero-sized targets
     if (w < 2 || h < 2) { this.zeroSize = true; return; }
     this.zeroSize = false;
+    // the window may have moved to a screen with another pixel density (or the page was zoomed)
+    if (this._pixelRatio() !== this.renderer.getPixelRatio()) this.renderer.setPixelRatio(this._pixelRatio());
     // window resize and the ResizeObserver both land here: reallocate the render targets only on a real change
     const pr = this.renderer.getPixelRatio(), key = `${w}x${h}@${pr}`;
     if (key === this._sizeKey) return;
@@ -116,6 +121,8 @@ export class Stage {
     this.onResize && this.onResize(w, h);
   }
   render(dt, t) {
+    // moving the window to another screen changes the pixel density without always firing a resize
+    if (this._pixelRatio() !== this.renderer.getPixelRatio()) this.resize();
     if (this.zeroSize) return;
     this.grade.uniforms.uTime.value = t % 100;
     this.composer.render(dt);

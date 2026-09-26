@@ -50,6 +50,7 @@ export class RyujinRules extends Rules {
     super._shot(kind);
   }
   hud() { const h = super.hud(); if (h) h.hurry = this.hurryValue(); return h; }
+  _endBall() { this.b.hurryUntil = 0; super._endBall(); }
   update(dt) {
     super.update(dt);
     const b = this.b; if (!b) return;

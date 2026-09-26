@@ -41,6 +41,12 @@ export class MusicPlayer {
     })().catch(e => { delete this.loading[id]; throw e; });
   }
 
+  // forget decoded songs outside `keep` (never the one playing now)
+  release(keep) {
+    const playing = this.cur && this.cur.cue.song;
+    for (const id of Object.keys(this.buffers)) if (!keep.includes(id) && id !== playing) { delete this.buffers[id]; if (this.loading) delete this.loading[id]; }
+  }
+
   play(name) {
     this.want = name;
     const cue0 = name && CUES.cues[name];

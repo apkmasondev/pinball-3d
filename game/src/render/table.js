@@ -120,6 +120,8 @@ function playfieldMaterial(base, emit, lampId, lamps, ao, gi, giColor) {
           clearcoatSpecularDirect = min(clearcoatSpecularDirect, vec3(0.35));
         #endif`);
   };
+  // the shader text depends on the number of GI spots: programs must not be shared across different counts
+  m.customProgramCacheKey = () => 'playfield-lamps-' + gi.length;
   // the AO is applied manually above (the built-in aoMap only affects indirect light)
   m.aoMap = null;
   return m;
@@ -457,7 +459,8 @@ export class TableView {
 
   // frees everything this table uploaded to the GPU (switching tables)
   dispose() {
-    const seen = new Set();
+    // the glass mirrors the scene's environment map, which the whole scene (and the next table) keeps using
+    const seen = new Set(this.glass && this.glass.material.envMap ? [this.glass.material.envMap] : []);
     const free = (x) => { if (x && !seen.has(x)) { seen.add(x); x.dispose(); } };
     this.root.traverse(o => {
       if (o.geometry) free(o.geometry);

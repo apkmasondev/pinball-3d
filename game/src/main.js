@@ -142,7 +142,7 @@ async function boot() {
     table.setGI(fx.giLevel);
     table.update(dt);
     balls.sync(world.balls, dt);
-    audio.updateRolling(mode === 'title' || paused ? [] : world.balls, halfW);
+    audio.updateRolling(mode === 'title' || paused ? [] : world.balls, halfW, layout.ramp);
     rig.viewW = innerWidth; rig.viewH = innerHeight;
     rig.hudPx = (mode === 'game' || mode === 'pause') && innerWidth / innerHeight < 1.25 ? hudBottom() : 0;
     rig.update(dt, world.balls, stage.camera.aspect, mode === 'title' ? 1 : 0);

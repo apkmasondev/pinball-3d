@@ -116,10 +116,7 @@ export class Rules {
   // ------------------------------------------------------------------ physics events
   handle(e) {
     const A = this.api;
-    if (this.state !== 'playing') {
-      // attract-mode physics (demo balls) still make noise
-      return;
-    }
+    if (this.state !== 'playing') { this._idle(e); return; }
     const b = this.b, p = this.p;
     const tilted = b.tilted;
     if (!['hit', 'flipperHit', 'flipperEOS', 'flipperRest', 'land', 'ballClick'].includes(e.type)) b.lastSwitchT = this.t;
@@ -169,6 +166,11 @@ export class Rules {
       case 'drain': this._drain(e); break;
       case 'gate': break;
     }
+  }
+
+  // outside a game (the demo behind the title) nothing scores, but a captured ball must still come back out
+  _idle(e) {
+    if (e.type === 'saucer' || e.type === 'scoop') this.api.world.holdBall(e.ball, 1.0);
   }
 
   _rollover(e) {
@@ -594,7 +596,6 @@ export class Rules {
       if (b.inShooter || t < b.skillUntil) on(n, i === b.skillLane || p.lanes[i], i === b.skillLane ? 'fastblink' : 'on');
       else on(n, p.lanes[i]);
     });
-    ['lTSU', 'lKI', 'lMI'].forEach((n, i) => on(n, p.lanes[i]));
     ['outL', 'inL', 'inR', 'outR'].forEach((n, i) => on(n, p.lowerLanes[i]));
     on('kickback', A.world.kickback.lit);
     on('shootAgain', p.extraBalls > 0 || (t < b.saveUntil), t < b.saveUntil && p.extraBalls === 0 ? (b.saveUntil - t < 3 ? 'fastblink' : 'blink') : 'on');
@@ -621,6 +622,7 @@ export class Rules {
     on('rampLock', b.ramps > 0);
     on('drops', A.world.drops.some(d => !d.up), 'on'); on('dropsJp', t < b.frenzyUntil, 'fastblink');
     on('frenzy', t < b.frenzyUntil, b.frenzyUntil - t < 4 ? 'fastblink' : 'blink');
+    on('tt1', t < b.frenzyUntil, 'blink');
     on('mystery', true, 'pulse'); on('saucerRing', true, 'pulse');
     on('spinL1', t < b.frenzyUntil, 'blink'); on('spinL2', t < b.frenzyUntil, 'blink');
     on('skill1', b.inShooter, 'blink'); on('skill2', b.inShooter, 'blink');

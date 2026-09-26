@@ -82,9 +82,12 @@ export function buildInariLayout() {
   wall('rampWallR', edges[0], { t: 8, mat: 'plastic', style: 'rampside' });
   wall('rampUnderCap', [edges[0].at(-1), edges[1].at(-1)], { t: 6, mat: 'plastic', style: 'hidden' });
   post('pRampL', ...edges[1][0], 10, 'rubber'); post('pRampR', ...edges[0][0], 10, 'rubber');
-  for (const i of [25, 45, 70, 95]) {
+  // legs stand either inside a wall or a full ball's width away from it: a narrower gap pinned balls
+  // (and one leg used to stand in the right orbit channel, leaving it narrower than a ball)
+  const legs = [[23, 1], [23, -1], [45, 1], [45, -1], [70, 1], [66, -1], [85, 1], [85, -1], [100, 1], [100, -1]];
+  for (const [i, s] of legs) {
     const q = ramp.path[i], n = normal(ramp.path, i);
-    for (const s of [-1, 1]) {
+    {
       const sp = { p: [q[0] + n[0] * 0.025 * s, q[1] + n[1] * 0.025 * s], h: q[2] - 0.002 };
       ramp.supports.push(sp);
       posts.push({ id: `rampSupport${i}_${s > 0 ? 'a' : 'b'}`, p: sp.p, r: 0.0018, kind: 'support' });

@@ -2,7 +2,7 @@
   "name": "tsukimi-pinball",
   "private": true,
   "version": "1.0.0",
-  "description": "Tsukimi & Ryūjin: two Japanese 3D pinball tables for the browser (three.js).",
+  "description": "Tsukimi, Ryūjin & Inari: three Japanese 3D pinball tables for the browser (three.js).",
   "type": "module",
   "homepage": "https://apkmason.dev/pinball-3d/",
   "repository": {

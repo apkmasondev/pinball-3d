@@ -116,7 +116,11 @@ export class Audio {
   setTable(def) {
     this.cueMap = def.music || {};
     this.songs = def.songs ? [...new Set([MENU_SONG, ...def.songs])] : undefined;
-    if (this.player) this.player.load(this.songs).catch(e => console.warn('music load failed', e));
+    if (this.player) {
+      // a decoded song holds ~60 MB: keep only the menu song and this table's own
+      if (this.songs) this.player.release(this.songs);
+      this.player.load(this.songs).catch(e => console.warn('music load failed', e));
+    }
   }
   music(name) {
     const cue = name === 'menu' ? MENU_CUE : (this.cueMap?.[name] ?? name);
@@ -127,7 +131,8 @@ export class Audio {
   }
 
   // continuous rolling noise per ball: volume & rate follow speed, voice follows surface
-  updateRolling(balls, tableHalfW) {
+  // ramp: the layout's ramp, whose plastic part (in metres of path) sounds different from the wire habitrail
+  updateRolling(balls, tableHalfW, ramp) {
     if (!this.ready) return;
     const c = this.ctx, t = c.currentTime;
     const stamp = this._rollStamp = (this._rollStamp || 0) + 1;
@@ -150,7 +155,10 @@ export class Audio {
       r.stamp = stamp;
       const sp = Math.hypot(b.vx, b.vy);
       let surface = 'roll';
-      if (b.mode === 'path') surface = (b.pathId === 'ramp' && b.s < b.path.length * 0.43) ? 'rampRoll' : 'wireRoll';
+      if (b.mode === 'path') {
+        const plastic = ramp ? ramp.plasticLength ?? b.path.length * ramp.plasticUntil : b.path.length * 0.43;
+        surface = (b.pathId === 'ramp' && b.s < plastic) ? 'rampRoll' : 'wireRoll';
+      }
       const onGround = b.mode === 'field' ? b.z < 0.002 : b.mode === 'path';
       const vol = onGround ? Math.min(1, sp / 2.2) ** 1.3 * (surface === 'roll' ? 0.55 : 0.75) : 0;
       const rate = 0.55 + Math.min(1.6, sp * 0.45), pan = Math.max(-1, Math.min(1, b.x / tableHalfW)) * 0.7;

@@ -298,8 +298,6 @@ export class World {
       if (P.pos <= 0) {
         P.pos = 0;
         if (P.vel < -0.3) this.emit('plungerHit', { speed: -P.vel });
-        P.vel = -P.vel * 0.18; if (Math.abs(P.vel) < 0.05) P.vel = 0;
-        if (P.vel > 0) P.vel = -P.vel;
         P.vel = 0;
       }
     }
@@ -398,13 +396,15 @@ export class World {
           this.emit('vortexOut', { ball: b });
         }
       } else if (b.vortexT) b.vortexT = 0;
-    }
+    } else if (b.vortexT) b.vortexT = 0;     // the whirlpool stopped with the ball in it: the next one catches it afresh
     if (this.magnet) {
       const m = this.magnet; const dx = m.x - b.x, dy = m.y - b.y; const d = Math.hypot(dx, dy);
       if (d < m.r && d > 1e-4) { b.vx += dx / d * m.f * dt; b.vy += dy / d * m.f * dt; }
     }
     // real balls never balance: tiny noise when (almost) at rest away from flippers/plunger
-    if (sp < 0.004 && this.time - b.onFlipperTime > 0.1 && b.y > this.L.plunger.restY + 0.05) {
+    // (only the shooter lane is exempt: a ball perched on a post between the flippers must roll off too)
+    const PL = this.L.plunger;
+    if (sp < 0.004 && this.time - b.onFlipperTime > 0.1 && !(Math.abs(b.x - PL.x) < PL.laneW / 2 && b.y < PL.restY + 0.05)) {
       b.vx += (Math.random() - 0.5) * 0.02; b.vy += (Math.random() - 0.5) * 0.02;
     }
     // clamp speed
@@ -444,19 +444,21 @@ export class World {
     if (!(isFinite(b.x) && isFinite(b.y))) { b.mode = 'gone'; this.emit('drain', { ball: b, error: true }); }
   }
 
-  _impulse(b, nx, ny, svx, svy, mat, extraE = 0) {
+  _impulse(b, nx, ny, svx, svy, mat, grip = false) {
     // relative velocity
     const rvx = b.vx - svx, rvy = b.vy - svy;
     const vn = rvx * nx + rvy * ny;
     if (vn >= 0) return 0;
     const M = MATERIALS[mat] || MATERIALS.metal;
-    const e = clamp(M.e / (1 + M.falloff * Math.abs(vn)) + extraE, 0, 0.98);
+    const e = clamp(M.e / (1 + M.falloff * Math.abs(vn)), 0, 0.98);
     const jn = -(1 + e) * vn;
-    // tangential friction (Coulomb)
+    // tangential friction (Coulomb). Against a fixed surface a ball that barely moves along it rolls
+    // instead of sliding: without this cut-off the friction acted like glue and balls came to rest on
+    // post tops and shallow guides. The flipper rubber keeps its grip (grip = true).
     const tvx = rvx - vn * nx, tvy = rvy - vn * ny;
     const tl = Math.hypot(tvx, tvy);
     let fx = 0, fy = 0;
-    if (tl > 1e-6) {
+    if (tl > (grip ? 1e-6 : 0.05)) {
       const jt = Math.min(M.mu * jn, tl * 0.4);
       fx = -tvx / tl * jt; fy = -tvy / tl * jt;
     }
@@ -561,7 +563,7 @@ export class World {
     // contact point & surface velocity
     const cx = b.x - nx * r - f.pivot[0], cy = b.y - ny * r - f.pivot[1];
     const svx = -f.omega * cy, svy = f.omega * cx;
-    const vin = this._impulse(b, nx, ny, svx, svy, 'flipper');
+    const vin = this._impulse(b, nx, ny, svx, svy, 'flipper', true);
     if (vin > 0.08) this.emit('flipperHit', { side: f.side, id: f.id, speed: vin, ball: b, moving: Math.abs(f.omega) > 1 });
     b.onFlipperTime = this.time;
   }
@@ -647,6 +649,8 @@ export class World {
       const d = Math.hypot(dx, dy);
       const spd = Math.hypot(b.vx, b.vy);
       const maxSpd = key === 'saucer' ? 1.15 : 2.6;
+      // a hole holds one ball: while it is taken the next one rolls over or out of it
+      if (d < h.r && this.balls.some(o => o !== b && o.mode === 'captured' && o.capture.key === key)) continue;
       if (d < h.capture && spd < maxSpd && !(b.ignoreHole === key && this.time < b.ignoreUntil)) {
         b.mode = 'captured';
         b.capture = { key, t: 0, x0: b.x, y0: b.y, cx: h.p[0], cy: h.p[1], hold: Infinity };

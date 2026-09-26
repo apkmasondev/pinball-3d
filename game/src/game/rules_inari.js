@@ -51,10 +51,23 @@ export class InariRules extends Rules {
   }
   lanternOn() { return this.b && this.t < this.b.lanternUntil; }
 
+  // no top lanes here: while the ball waits in the shooter the flippers move the Fox Fire to another jet
+  flipper(side, on) {
+    if (this.state !== 'playing' || !on) return;
+    const p = this.p, b = this.b, dir = side === 'R' ? 1 : -1;
+    p.lowerLanes = dir > 0 ? [p.lowerLanes[3], ...p.lowerLanes.slice(0, 3)] : [...p.lowerLanes.slice(1), p.lowerLanes[0]];
+    if (b.inShooter) { b.skillJet = (b.skillJet + dir + 3) % 3; this.api.audio.play('laneChange', 0.5); }
+  }
+
+  _endBall() {
+    // timed modes end with the ball, so their lamps do not keep running through the bonus count
+    this.b.lanternUntil = 0; this.b.lanternShot = null; this.b.guardUntil = 0;
+    super._endBall();
+  }
+
   // ------------------------------------------------------------------ events
   handle(e) {
-    const A = this.api;
-    if (this.state !== 'playing') return;
+    if (this.state !== 'playing') { this._idle(e); return; }
     const b = this.b, p = this.p;
     if (e.type === 'flipperHit') {
       if (e.id === 'flipperU' && e.moving) { b.leapT = this.t; b.leapBall = e.ball; }
@@ -113,17 +126,23 @@ export class InariRules extends Rules {
   }
 
   _gate(e) {
-    const A = this.api, b = this.b, p = this.p;
-    p.gates++;
+    const A = this.api, b = this.b;
     this.add(1500 * Math.max(1, b.chain));
     A.audio.play('rollover', 0.5 + e.idx * 0.1, { rate: 1 + e.idx * 0.08 });
     A.lamps.flash('gate' + e.idx, 0.2);
-    if (p.gates % 50 === 0) {
+    this._addGates(1);
+  }
+
+  // every 50th gate awards, every 100th lights an extra ball; the ema's +10 may step over a mark, which still counts
+  _addGates(n) {
+    const A = this.api, p = this.p;
+    const before = p.gates; p.gates += n;
+    for (let g = Math.floor(before / 50) + 1; g <= Math.floor(p.gates / 50); g++) {
       p.gateAwards++;
       const v = this.add(250000 * p.gateAwards);
       A.audio.play('jackpot'); A.fx.flash(0.8, 0xffb050); A.fx.lightShow('jackpot', 1.2);
-      let small = `${p.gates} ${this.tr('gates')} · ${fmt(v)}`;
-      if (p.gates % 100 === 0 && !p.extraBallLit && p.extraBallAwarded < 2) { p.extraBallLit = true; small = this.tr('extraBallLit'); A.audio.play('knocker'); }
+      let small = `${g * 50} ${this.tr('gates')} · ${fmt(v)}`;
+      if (g % 2 === 0 && !p.extraBallLit && p.extraBallAwarded < 2) { p.extraBallLit = true; small = this.tr('extraBallLit'); A.audio.play('knocker'); }
       A.display.show({ big: this.tr('senbon'), small, dur: 2.2, prio: 5, anim: 'torii' });
     }
   }
@@ -250,7 +269,7 @@ export class InariRules extends Rules {
       case 'kick': A.world.kickback.lit = true; txt = this.tr('kickbackLit'); break;
       case 'save': b.saveUntil = Math.max(b.saveUntil, this.t + 10); txt = this.tr('ballSaveLit') + ' 10s'; break;
       case 'tails': this._tails(2, false); txt = '+2 ' + this.tr('tail'); break;
-      case 'gates': p.gates += 10; txt = '+10 ' + this.tr('gates'); break;
+      case 'gates': this._addGates(10); txt = '+10 ' + this.tr('gates'); break;
       case 'guard': b.guardUntil = Math.max(b.guardUntil, this.t) + 15; txt = this.tr('guard'); break;
       case 'eb': p.extraBallLit = true; txt = this.tr('extraBallLit'); break;
     }
